@@ -337,3 +337,84 @@ export function getRecordBook(games) {
       .slice(0, 10)
   };
 }
+
+export function getSeasonList(games) {
+  return Array.from(new Set(games.map(game => game.year)))
+    .sort((a, b) => b - a);
+}
+
+export function getGamesForSeason(games, year) {
+  return games
+    .filter(game => game.year === Number(year))
+    .sort((a, b) => {
+      if (a.week !== b.week) return a.week - b.week;
+      return a.gameId - b.gameId;
+    });
+}
+
+export function calculateSeasonStandings(games, year) {
+  const seasonGames = getGamesForSeason(games, year);
+
+  return calculateOwnerRecords(seasonGames)
+    .sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+      return b.pointsFor - a.pointsFor;
+    });
+}
+export function calculateRegularSeasonStandings(games, year) {
+  const regularSeasonGames = getGamesForSeason(games, year)
+    .filter(game => game.gameType === "R");
+
+  return calculateOwnerRecords(regularSeasonGames)
+    .sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+      return b.pointsFor - a.pointsFor;
+    });
+}
+
+export function getPlayoffGamesForSeason(games, year) {
+  return getGamesForSeason(games, year)
+    .filter(game => game.gameType === "P" || game.gameType === "C");
+}
+
+export function getSeasonFinishers(games, year) {
+  const playoffGames = getPlayoffGamesForSeason(games, year);
+
+  const championshipGame = playoffGames.find(
+    game => game.gameType === "P" && game.finalSeeding === 1
+  );
+
+  const toiletBowlGame = playoffGames.find(
+    game => game.gameType === "C" && game.finalSeeding === 11
+  );
+
+  function getWinnerLoser(game) {
+    if (!game) return null;
+
+    const team1Won = game.team1Score > game.team2Score;
+
+    return {
+      winner: team1Won ? game.team1 : game.team2,
+      loser: team1Won ? game.team2 : game.team1,
+      winnerScore: team1Won ? game.team1Score : game.team2Score,
+      loserScore: team1Won ? game.team2Score : game.team1Score
+    };
+  }
+
+  const championship = getWinnerLoser(championshipGame);
+  const toiletBowl = getWinnerLoser(toiletBowlGame);
+
+  return {
+    champion: championship?.winner ?? null,
+    runnerUp: championship?.loser ?? null,
+    championScore: championship?.winnerScore ?? null,
+    runnerUpScore: championship?.loserScore ?? null,
+
+    toiletBowlWinner: toiletBowl?.winner ?? null,
+    toiletBowlLoser: toiletBowl?.loser ?? null,
+    toiletBowlWinnerScore: toiletBowl?.winnerScore ?? null,
+    toiletBowlLoserScore: toiletBowl?.loserScore ?? null
+  };
+}
