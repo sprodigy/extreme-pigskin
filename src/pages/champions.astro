@@ -1,0 +1,47 @@
+---
+import { getGameLog } from "../lib/data";
+import { getChampionshipGames, slugifyOwner } from "../lib/stats";
+
+const gameLog = getGameLog();
+const championshipGames = getChampionshipGames(gameLog);
+---
+
+<html>
+  <body>
+    <p><a href="/">← Back to Home</a></p>
+
+    <h1>Championship History</h1>
+
+    <table>
+      <tr>
+        <th>Year</th>
+        <th>Champion</th>
+        <th>Runner-Up</th>
+        <th>Score</th>
+        <th>Margin</th>
+      </tr>
+
+      {
+        championshipGames.map(game => (
+          <tr>
+            <td>{game.year}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(game.champion)}`}>
+                {game.champion}
+              </a>
+            </td>
+            <td>
+              <a href={`/owners/${slugifyOwner(game.runnerUp)}`}>
+                {game.runnerUp}
+              </a>
+            </td>
+            <td>
+              {game.championScore.toFixed(2)} - {game.runnerUpScore.toFixed(2)}
+            </td>
+            <td>{game.margin.toFixed(2)}</td>
+          </tr>
+        ))
+      }
+    </table>
+  </body>
+</html>

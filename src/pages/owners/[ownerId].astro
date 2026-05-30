@@ -1,0 +1,184 @@
+---
+import { getGameLog } from "../../lib/data";
+import {
+  getOwnerList,
+  getGamesForOwner,
+  getOwnerRecord,
+  calculateChampionships,
+  getOwnerChampionshipResults,
+  getOpponentRecords
+} from "../../lib/stats";
+
+export function getStaticPaths() {
+  const gameLog = getGameLog();
+
+  const owners = getOwnerList(gameLog);
+
+  return owners.map(owner => ({
+    params: {
+      ownerId: owner.ownerId
+    },
+    props: {
+      ownerName: owner.owner
+    }
+  }));
+}
+
+const gameLog = getGameLog();
+
+const { ownerName } = Astro.props;
+
+const record = getOwnerRecord(gameLog, ownerName);
+const games = getGamesForOwner(gameLog, ownerName);
+
+const championships = calculateChampionships(gameLog);
+
+const ownerTitles =
+  championships[ownerName]?.championships ?? 0;
+
+const ownerRunnerUps =
+  championships[ownerName]?.runnerUps ?? 0;
+
+const championshipResults =
+  getOwnerChampionshipResults(gameLog, ownerName);
+
+const rivalries =
+  getOpponentRecords(gameLog, ownerName);
+
+const sortedGames = [...games].sort((a, b) => {
+  if (b.year !== a.year) return b.year - a.year;
+  return b.week - a.week;
+});
+---
+
+<html>
+  <body>
+    <p><a href="/">← Back to Home</a></p>
+
+    <h1>{ownerName}</h1>
+
+    <h2>League Achievements</h2>
+
+    <p>
+      Championships: <strong>{ownerTitles}</strong>
+    </p>
+
+    <p>
+      Runner-Ups: <strong>{ownerRunnerUps}</strong>
+    </p>
+
+    {
+      championshipResults.championshipSeasons.length > 0 && (
+        <p>
+          Championship Seasons:{" "}
+          <strong>
+            {championshipResults.championshipSeasons.join(", ")}
+          </strong>
+        </p>
+      )
+    }
+
+    {
+      championshipResults.runnerUpSeasons.length > 0 && (
+        <p>
+          Runner-Up Seasons:{" "}
+          <strong>
+            {championshipResults.runnerUpSeasons.join(", ")}
+          </strong>
+        </p>
+      )
+    }
+
+    <h2>All-Time Record</h2>
+
+    <p>
+      {record.wins}-{record.losses}
+      {record.ties > 0 ? `-${record.ties}` : ""}
+      ({record.winPct.toFixed(3)})
+    </p>
+
+    <p>Games Played: {record.gamesPlayed}</p>
+
+    <p>
+      Points For: {record.pointsFor.toFixed(2)}
+    </p>
+
+    <p>
+      Points Against: {record.pointsAgainst.toFixed(2)}
+    </p>
+
+    <h2>Rivalries</h2>
+
+    <table>
+      <tr>
+        <th>Opponent</th>
+        <th>Record</th>
+        <th>Games</th>
+      </tr>
+
+      {
+        rivalries.map(rival => (
+          <tr>
+            <td>{rival.opponent}</td>
+            <td>
+              {rival.wins}-{rival.losses}
+              {rival.ties > 0 ? `-${rival.ties}` : ""}
+            </td>
+            <td>{rival.gamesPlayed}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>Recent Games</h2>
+
+    <table>
+      <tr>
+        <th>Year</th>
+        <th>Week</th>
+        <th>Opponent</th>
+        <th>Score</th>
+        <th>Result</th>
+      </tr>
+
+      {
+        sortedGames.slice(0, 20).map(game => {
+          const isTeam1 = game.team1 === ownerName;
+
+          const ownerScore = isTeam1
+            ? game.team1Score
+            : game.team2Score;
+
+          const opponent = isTeam1
+            ? game.team2
+            : game.team1;
+
+          const opponentScore = isTeam1
+            ? game.team2Score
+            : game.team1Score;
+
+          let result = "T";
+
+          if (ownerScore > opponentScore) {
+            result = "W";
+          } else if (ownerScore < opponentScore) {
+            result = "L";
+          }
+
+          return (
+            <tr>
+              <td>{game.year}</td>
+              <td>{game.week}</td>
+              <td>{opponent}</td>
+              <td>
+                {ownerScore.toFixed(2)} - {opponentScore.toFixed(2)}
+              </td>
+              <td>{result}</td>
+            </tr>
+          );
+        })
+      }
+    </table>
+
+  </body>
+</html>

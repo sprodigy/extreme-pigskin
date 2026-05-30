@@ -1,9 +1,49 @@
 ---
+import { getGameLog } from "../lib/data";
+import { calculateOwnerRecords, slugifyOwner } from "../lib/stats";
+
+const gameLog = getGameLog();
+const standings = calculateOwnerRecords(gameLog);
 ---
 
 <html>
   <body>
     <h1>Fantasy League History</h1>
-    <p>Website under construction.</p>
+<p>
+  <a href="/champions">Championship History</a>
+</p>
+    <h2>All-Time Standings</h2>
+
+    <table>
+      <tr>
+        <th>Owner</th>
+        <th>W</th>
+        <th>L</th>
+        <th>T</th>
+        <th>Win %</th>
+        <th>PF</th>
+        <th>PA</th>
+        <th>GP</th>
+      </tr>
+
+      {
+        standings.map(owner => (
+          <tr>
+            <td>
+              <a href={`/owners/${slugifyOwner(owner.owner)}`}>
+                {owner.owner}
+              </a>
+            </td>
+            <td>{owner.wins}</td>
+            <td>{owner.losses}</td>
+            <td>{owner.ties}</td>
+            <td>{owner.winPct.toFixed(3)}</td>
+            <td>{owner.pointsFor.toFixed(2)}</td>
+            <td>{owner.pointsAgainst.toFixed(2)}</td>
+            <td>{owner.gamesPlayed}</td>
+          </tr>
+        ))
+      }
+    </table>
   </body>
 </html>
