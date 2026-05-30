@@ -243,3 +243,97 @@ export function getOpponentRecords(games, ownerName) {
     }))
     .sort((a, b) => b.gamesPlayed - a.gamesPlayed);
 }
+
+export function getRecordBook(games) {
+  const gameRecords = games.map(game => {
+    const team1Won = game.team1Score > game.team2Score;
+
+    const winner = team1Won ? game.team1 : game.team2;
+    const loser = team1Won ? game.team2 : game.team1;
+
+    const winnerScore = team1Won ? game.team1Score : game.team2Score;
+    const loserScore = team1Won ? game.team2Score : game.team1Score;
+
+    return {
+      gameId: game.gameId,
+      year: game.year,
+      week: game.week,
+      gameType: game.gameType,
+      finalSeeding: game.finalSeeding,
+      team1: game.team1,
+      team1Score: game.team1Score,
+      team2: game.team2,
+      team2Score: game.team2Score,
+      winner,
+      loser,
+      winnerScore,
+      loserScore,
+      margin: Math.abs(game.team1Score - game.team2Score),
+      totalPoints: game.team1Score + game.team2Score
+    };
+  });
+
+  return {
+    highestScores: [...gameRecords]
+      .flatMap(game => [
+        {
+          owner: game.team1,
+          score: game.team1Score,
+          opponent: game.team2,
+          opponentScore: game.team2Score,
+          year: game.year,
+          week: game.week
+        },
+        {
+          owner: game.team2,
+          score: game.team2Score,
+          opponent: game.team1,
+          opponentScore: game.team1Score,
+          year: game.year,
+          week: game.week
+        }
+      ])
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10),
+
+    lowestScores: [...gameRecords]
+      .flatMap(game => [
+        {
+          owner: game.team1,
+          score: game.team1Score,
+          opponent: game.team2,
+          opponentScore: game.team2Score,
+          year: game.year,
+          week: game.week
+        },
+        {
+          owner: game.team2,
+          score: game.team2Score,
+          opponent: game.team1,
+          opponentScore: game.team1Score,
+          year: game.year,
+          week: game.week
+        }
+      ])
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 10),
+
+    biggestBlowouts: [...gameRecords]
+      .sort((a, b) => b.margin - a.margin)
+      .slice(0, 10),
+
+    closestGames: [...gameRecords]
+      .filter(game => game.margin > 0)
+      .sort((a, b) => a.margin - b.margin)
+      .slice(0, 10),
+
+    highestCombinedScores: [...gameRecords]
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .slice(0, 10),
+
+    lowestWinningScores: [...gameRecords]
+      .filter(game => game.winnerScore > game.loserScore)
+      .sort((a, b) => a.winnerScore - b.winnerScore)
+      .slice(0, 10)
+  };
+}

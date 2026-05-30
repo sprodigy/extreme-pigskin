@@ -1,0 +1,203 @@
+---
+import { getGameLog } from "../lib/data";
+import { getRecordBook, slugifyOwner } from "../lib/stats";
+
+const gameLog = getGameLog();
+const records = getRecordBook(gameLog);
+---
+
+<html>
+  <body>
+    <p><a href="/">← Back to Home</a></p>
+
+    <h1>Record Book</h1>
+
+    <h2>Highest Scores</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Score</th>
+        <th>Opponent</th>
+        <th>Year</th>
+        <th>Week</th>
+      </tr>
+
+      {
+        records.highestScores.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{row.score.toFixed(2)}</td>
+            <td>{row.opponent}</td>
+            <td>{row.year}</td>
+            <td>{row.week}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>Biggest Blowouts</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Winner</th>
+        <th>Loser</th>
+        <th>Score</th>
+        <th>Margin</th>
+        <th>Year</th>
+        <th>Week</th>
+      </tr>
+
+      {
+        records.biggestBlowouts.map((game, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(game.winner)}`}>
+                {game.winner}
+              </a>
+            </td>
+            <td>{game.loser}</td>
+            <td>
+              {game.winnerScore.toFixed(2)} - {game.loserScore.toFixed(2)}
+            </td>
+            <td>{game.margin.toFixed(2)}</td>
+            <td>{game.year}</td>
+            <td>{game.week}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>Closest Games</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Winner</th>
+        <th>Loser</th>
+        <th>Score</th>
+        <th>Margin</th>
+        <th>Year</th>
+        <th>Week</th>
+      </tr>
+
+      {
+        records.closestGames.map((game, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(game.winner)}`}>
+                {game.winner}
+              </a>
+            </td>
+            <td>{game.loser}</td>
+            <td>
+              {game.winnerScore.toFixed(2)} - {game.loserScore.toFixed(2)}
+            </td>
+            <td>{game.margin.toFixed(2)}</td>
+            <td>{game.year}</td>
+            <td>{game.week}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>Highest Combined Scores</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Teams</th>
+        <th>Score</th>
+        <th>Total</th>
+        <th>Year</th>
+        <th>Week</th>
+      </tr>
+
+      {
+        records.highestCombinedScores.map((game, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>{game.team1} vs {game.team2}</td>
+            <td>
+              {game.team1Score.toFixed(2)} - {game.team2Score.toFixed(2)}
+            </td>
+            <td>{game.totalPoints.toFixed(2)}</td>
+            <td>{game.year}</td>
+            <td>{game.week}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>Lowest Winning Scores</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Winner</th>
+        <th>Loser</th>
+        <th>Score</th>
+        <th>Year</th>
+        <th>Week</th>
+      </tr>
+
+      {
+        records.lowestWinningScores.map((game, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(game.winner)}`}>
+                {game.winner}
+              </a>
+            </td>
+            <td>{game.loser}</td>
+            <td>
+              {game.winnerScore.toFixed(2)} - {game.loserScore.toFixed(2)}
+            </td>
+            <td>{game.year}</td>
+            <td>{game.week}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>Lowest Scores</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Score</th>
+        <th>Opponent</th>
+        <th>Year</th>
+        <th>Week</th>
+      </tr>
+
+      {
+        records.lowestScores.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{row.score.toFixed(2)}</td>
+            <td>{row.opponent}</td>
+            <td>{row.year}</td>
+            <td>{row.week}</td>
+          </tr>
+        ))
+      }
+    </table>
+  </body>
+</html>
