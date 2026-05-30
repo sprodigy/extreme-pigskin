@@ -18,22 +18,56 @@ export function getStaticPaths() {
 
 const gameLog = getGameLog();
 const { year } = Astro.props;
-
 const seasons = stats.getSeasonList(gameLog);
+const currentYear = Number(year);
+
+const currentIndex = seasons.indexOf(currentYear);
+
+const newerSeason =
+  currentIndex > 0
+    ? seasons[currentIndex - 1]
+    : null;
+
+const olderSeason =
+  currentIndex < seasons.length - 1
+    ? seasons[currentIndex + 1]
+    : null;
 const standings = stats.calculateRegularSeasonStandings(gameLog, year);
 const games = stats.getGamesForSeason(gameLog, year);
 const playoffGames = stats.getPlayoffGamesForSeason(gameLog, year);
 const finishers = stats.getSeasonFinishers(gameLog, year);
+const topTeamsByWeek = stats.getTopTeamsByWeek(gameLog, year);
 
 const slugifyOwner = stats.slugifyOwner;
 ---
 
 <html>
   <body>
-    <p><a href="/">← Back to Home</a></p>
-    <p><a href="/seasons">← Season Explorer</a></p>
+    <p><a href="/">&larr; Back to Home</a></p>
+    <p><a href="/seasons">&larr; Season Explorer</a></p>
 
     <h1>{year} Season</h1>
+    <p>
+  {
+    newerSeason && (
+      <a href={`/seasons/${newerSeason}`}>
+        &larr; {newerSeason}
+      </a>
+    )
+  }
+
+  {
+    newerSeason && olderSeason && " | "
+  }
+
+  {
+    olderSeason && (
+      <a href={`/seasons/${olderSeason}`}>
+        {olderSeason} &rarr;
+      </a>
+    )
+  }
+</p>
 
     <label for="season-select">Jump to season:</label>
 
@@ -99,7 +133,39 @@ const slugifyOwner = stats.slugifyOwner;
         </p>
       )
     }
+<h2>Top Team of the Week</h2>
 
+<table>
+  <tr>
+    <th>Week</th>
+    <th>Owner</th>
+    <th>Score</th>
+    <th>Opponent</th>
+    <th>Opponent Score</th>
+    <th>Game Type</th>
+  </tr>
+
+  {
+    topTeamsByWeek.map(row => (
+      <tr>
+        <td>{row.week}</td>
+        <td>
+          <a href={`/owners/${slugifyOwner(row.owner)}`}>
+            {row.owner}
+          </a>
+        </td>
+        <td>{row.score.toFixed(2)}</td>
+        <td>
+          <a href={`/owners/${slugifyOwner(row.opponent)}`}>
+            {row.opponent}
+          </a>
+        </td>
+        <td>{row.opponentScore.toFixed(2)}</td>
+        <td>{row.gameType}</td>
+      </tr>
+    ))
+  }
+</table>
     <h2>Regular Season Standings</h2>
 
     <table>

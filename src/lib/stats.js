@@ -386,9 +386,12 @@ export function getSeasonFinishers(games, year) {
     game => game.gameType === "P" && game.finalSeeding === 1
   );
 
-  const toiletBowlGame = playoffGames.find(
-    game => game.gameType === "C" && game.finalSeeding === 11
-  );
+  const consolationPlacementGames = playoffGames
+    .filter(game => game.gameType === "C")
+    .filter(game => Number(game.finalSeeding) > 0);
+
+  const toiletBowlGame = consolationPlacementGames
+    .sort((a, b) => Number(b.finalSeeding) - Number(a.finalSeeding))[0];
 
   function getWinnerLoser(game) {
     if (!game) return null;
@@ -399,7 +402,8 @@ export function getSeasonFinishers(games, year) {
       winner: team1Won ? game.team1 : game.team2,
       loser: team1Won ? game.team2 : game.team1,
       winnerScore: team1Won ? game.team1Score : game.team2Score,
-      loserScore: team1Won ? game.team2Score : game.team1Score
+      loserScore: team1Won ? game.team2Score : game.team1Score,
+      finalSeeding: game.finalSeeding
     };
   }
 
@@ -415,6 +419,79 @@ export function getSeasonFinishers(games, year) {
     toiletBowlWinner: toiletBowl?.winner ?? null,
     toiletBowlLoser: toiletBowl?.loser ?? null,
     toiletBowlWinnerScore: toiletBowl?.winnerScore ?? null,
-    toiletBowlLoserScore: toiletBowl?.loserScore ?? null
+    toiletBowlLoserScore: toiletBowl?.loserScore ?? null,
+    toiletBowlSeeding: toiletBowl?.finalSeeding ?? null
   };
+}
+
+export function getTopTeamsByWeek(games, year) {
+  const seasonGames = getGamesForSeason(games, year);
+  const weeklyScores = {};
+
+  for (const game of seasonGames) {
+    if (!weeklyScores[game.week]) {
+      weeklyScores[game.week] = [];
+    }
+
+    weeklyScores[game.week].push({
+      week: game.week,
+      owner: game.team1,
+      score: game.team1Score,
+      opponent: game.team2,
+      opponentScore: game.team2Score,
+      gameType: game.gameType
+    });
+
+    weeklyScores[game.week].push({
+      week: game.week,
+      owner: game.team2,
+      score: game.team2Score,
+      opponent: game.team1,
+      opponentScore: game.team1Score,
+      gameType: game.gameType
+    });
+  }
+
+  return Object.entries(weeklyScores)
+    .map(([week, scores]) => {
+      const topScore = scores
+        .sort((a, b) => b.score - a.score)[0];
+
+      return {
+        week: Number(week),
+        ...topScore
+      };
+    })
+    .sort((a, b) => a.week - b.week);
+}
+
+export function calculateToiletBowls(games) {
+  const toiletBowls = {};
+
+  const seasons = getSeasonList(games);
+
+  for (const year of seasons) {
+    const playoffGames = getPlayoffGamesForSeason(games, year);
+
+    const consolationPlacementGames = playoffGames
+      .filter(game => game.gameType === "C")
+      .filter(game => Number(game.finalSeeding) > 0);
+
+    const toiletBowlGame = consolationPlacementGames
+      .sort((a, b) => Number(b.finalSeeding) - Number(a.finalSeeding))[0];
+
+    if (!toiletBowlGame) continue;
+
+    const team1Won = toiletBowlGame.team1Score > toiletBowlGame.team2Score;
+
+    const winner = team1Won ? toiletBowlGame.team1 : toiletBowlGame.team2;
+
+    if (!toiletBowls[winner]) {
+      toiletBowls[winner] = 0;
+    }
+
+    toiletBowls[winner]++;
+  }
+
+  return toiletBowls;
 }

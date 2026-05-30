@@ -1,58 +1,203 @@
 ---
-import { getGameLog } from "../lib/data";
-import { calculateOwnerRecords, slugifyOwner } from "../lib/stats";
+import { getGameLog, getOwners } from "../lib/data";
+import {
+  calculateOwnerRecords,
+  calculateChampionships,
+  calculateToiletBowls,
+  slugifyOwner
+} from "../lib/stats";
 
 const gameLog = getGameLog();
+const owners = getOwners();
+
 const standings = calculateOwnerRecords(gameLog);
+const championships = calculateChampionships(gameLog);
+const toiletBowls = calculateToiletBowls(gameLog);
+
+const activeOwners = new Set(
+  owners
+    .filter(owner => owner.status === "ACTIVE")
+    .map(owner => owner.owner)
+);
 ---
 
 <html>
   <body>
     <h1>Fantasy League History</h1>
-<p>
-  <a href="/champions">Championship History</a>
-</p>
 
-<p>
-  <a href="/records">Record Book</a>
-</p>
+    <p>
+      <a href="/champions">Championship History</a>
+    </p>
 
-<p>
-  <a href="/seasons">Season Explorer</a>
-</p>
+    <p>
+      <a href="/records">Record Book</a>
+    </p>
+
+    <p>
+      <a href="/seasons">Season Explorer</a>
+    </p>
 
     <h2>All-Time Standings</h2>
 
-    <table>
+    <label for="owner-filter">Show:</label>
+
+    <select id="owner-filter">
+      <option value="all">All Owners</option>
+      <option value="active">Active Owners</option>
+    </select>
+
+    <table id="standings-table">
       <tr>
-        <th>Owner</th>
-        <th>W</th>
-        <th>L</th>
-        <th>T</th>
-        <th>Win %</th>
-        <th>PF</th>
-        <th>PA</th>
-        <th>GP</th>
+        <th data-sort="owner">Owner</th>
+        <th data-sort="wins">W</th>
+        <th data-sort="losses">L</th>
+        <th data-sort="ties">T</th>
+        <th data-sort="winPct">Pct</th>
+        <th data-sort="pointsFor">PF</th>
+        <th data-sort="pointsAgainst">PA</th>
+        <th data-sort="gamesPlayed">GP</th>
+        <th data-sort="championships" title="Championships">&#127942;</th>
+        <th data-sort="runnerUps" title="Runner-Up">&#129352;</th>
+        <th data-sort="toiletBowls" title="Toilet Bowl Wins">&#128701;</th>
       </tr>
 
       {
-        standings.map(owner => (
-          <tr>
-            <td>
-              <a href={`/owners/${slugifyOwner(owner.owner)}`}>
-                {owner.owner}
-              </a>
-            </td>
-            <td>{owner.wins}</td>
-            <td>{owner.losses}</td>
-            <td>{owner.ties}</td>
-            <td>{owner.winPct.toFixed(3)}</td>
-            <td>{owner.pointsFor.toFixed(2)}</td>
-            <td>{owner.pointsAgainst.toFixed(2)}</td>
-            <td>{owner.gamesPlayed}</td>
-          </tr>
-        ))
+        standings.map(owner => {
+          const ownerChampionships =
+            championships[owner.owner]?.championships ?? 0;
+
+          const ownerRunnerUps =
+            championships[owner.owner]?.runnerUps ?? 0;
+
+          const ownerToiletBowls =
+            toiletBowls[owner.owner] ?? 0;
+
+          return (
+            <tr
+              data-active={activeOwners.has(owner.owner) ? "true" : "false"}
+              data-owner={owner.owner}
+              data-wins={owner.wins}
+              data-losses={owner.losses}
+              data-ties={owner.ties}
+              data-winpct={owner.winPct}
+              data-pointsfor={owner.pointsFor}
+              data-pointsagainst={owner.pointsAgainst}
+              data-gamesplayed={owner.gamesPlayed}
+              data-championships={ownerChampionships}
+              data-runnerups={ownerRunnerUps}
+              data-toiletbowls={ownerToiletBowls}
+            >
+              <td>
+                <a href={`/owners/${slugifyOwner(owner.owner)}`}>
+                  {owner.owner}
+                </a>
+              </td>
+              <td>{owner.wins}</td>
+              <td>{owner.losses}</td>
+              <td>{owner.ties}</td>
+              <td>{owner.winPct.toFixed(3)}</td>
+              <td>{Math.round(owner.pointsFor).toLocaleString()}</td>
+              <td>{Math.round(owner.pointsAgainst).toLocaleString()}</td>
+              <td>{owner.gamesPlayed}</td>
+              <td>{ownerChampionships}</td>
+              <td>{ownerRunnerUps}</td>
+              <td>{ownerToiletBowls}</td>
+            </tr>
+          );
+        })
       }
     </table>
+
+    <style>
+      table {
+        border-collapse: collapse;
+        width: auto;
+        margin-top: 1rem;
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 0.15rem 0.25rem;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      th {
+        background: #f5f5f5;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      tr:nth-child(even) {
+        background: #fafafa;
+      }
+    </style>
+
+    <script>
+      const filter = document.getElementById("owner-filter");
+      const table = document.getElementById("standings-table");
+      const headers = table.querySelectorAll("th[data-sort]");
+      let sortColumn = "winpct";
+      let sortDirection = "desc";
+
+      function applyFilter() {
+        const rows = table.querySelectorAll("tr[data-active]");
+        const value = filter.value;
+
+        rows.forEach(row => {
+          const isActive = row.dataset.active === "true";
+
+          if (value === "all") {
+            row.style.display = "";
+          } else if (value === "active" && isActive) {
+            row.style.display = "";
+          } else {
+            row.style.display = "none";
+          }
+        });
+      }
+
+      function sortTable(column) {
+        const rows = Array.from(table.querySelectorAll("tr[data-active]"));
+
+        if (sortColumn === column) {
+          sortDirection = sortDirection === "asc" ? "desc" : "asc";
+        } else {
+          sortColumn = column;
+          sortDirection = column === "owner" ? "asc" : "desc";
+        }
+
+        rows.sort((a, b) => {
+          const aValue = a.dataset[column.toLowerCase()];
+          const bValue = b.dataset[column.toLowerCase()];
+
+          if (column === "owner") {
+            return sortDirection === "asc"
+              ? aValue.localeCompare(bValue)
+              : bValue.localeCompare(aValue);
+          }
+
+          const aNum = Number(aValue);
+          const bNum = Number(bValue);
+
+          return sortDirection === "asc"
+            ? aNum - bNum
+            : bNum - aNum;
+        });
+
+        rows.forEach(row => table.appendChild(row));
+
+        applyFilter();
+      }
+
+      filter.addEventListener("change", applyFilter);
+
+      headers.forEach(header => {
+        header.addEventListener("click", () => {
+          sortTable(header.dataset.sort);
+        });
+      });
+    </script>
   </body>
 </html>

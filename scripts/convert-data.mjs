@@ -4,9 +4,32 @@ import csv from "csv-parser";
 const results = [];
 const skipped = [];
 
+function convertOwnersCsv() {
+  const ownerRows = [];
+
+  fs.createReadStream("data/Owners.csv")
+    .pipe(csv())
+    .on("data", row => {
+      if (!row["Owner"]) return;
+
+      ownerRows.push({
+        owner: row["Owner"].trim(),
+        status: row["Status"]?.trim().toUpperCase() || ""
+      });
+    })
+    .on("end", () => {
+      fs.writeFileSync(
+        "public/data/owners.json",
+        JSON.stringify(ownerRows, null, 2)
+      );
+
+      console.log(`Created ${ownerRows.length} owners.`);
+    });
+}
+
 fs.createReadStream("data/Game_Log.csv")
   .pipe(csv())
-  .on("data", (row) => {
+  .on("data", row => {
     const gameCount = Number(row["Game Count"]);
     const year = Number(row["Year"]);
     const week = Number(row["Week"]);
@@ -14,7 +37,6 @@ fs.createReadStream("data/Game_Log.csv")
     const team2Score = Number(row["Team 2 Score"]);
     const gameType = row["Game Type"]?.trim();
 
-    // Skip repeated headers, blanks, formula junk, and invalid rows
     const isValidGame =
       Number.isInteger(gameCount) &&
       Number.isInteger(year) &&
@@ -34,22 +56,17 @@ fs.createReadStream("data/Game_Log.csv")
       return;
     }
 
-    const game = {
+    results.push({
       gameId: gameCount,
       year,
       week,
-
       team1: row["Team 1"].trim(),
       team1Score,
-
       team2: row["Team 2"].trim(),
       team2Score,
-
       gameType,
-      finalSeeding: Number(row["Final Seeding"] || 0),
-    };
-
-    results.push(game);
+      finalSeeding: Number(row["Final Seeding"] || 0)
+    });
   })
   .on("end", () => {
     results.sort((a, b) => a.gameId - b.gameId);
@@ -68,4 +85,6 @@ fs.createReadStream("data/Game_Log.csv")
 
     console.log(`Created ${results.length} valid games.`);
     console.log(`Skipped ${skipped.length} invalid rows.`);
+
+    convertOwnersCsv();
   });
