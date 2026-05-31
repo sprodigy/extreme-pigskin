@@ -66,3 +66,22 @@ select {
   border-radius: 4px;
   background: #f8f8f8;
 }
+
+.hof-card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hof-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: #fafafa;
+  min-width: 220px;
+}
+
+.hof-card h3 {
+  margin-top: 0;
+}

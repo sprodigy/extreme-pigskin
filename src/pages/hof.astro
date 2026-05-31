@@ -1,0 +1,226 @@
+---
+import { getGameLog } from "../lib/data";
+import { getHallOfFameStats, slugifyOwner } from "../lib/stats";
+import "../styles/style.css";
+import Nav from "../components/Nav.astro";
+
+const gameLog = getGameLog();
+const hof = getHallOfFameStats(gameLog);
+
+function formatValue(value, type = "number") {
+  if (type === "pct") return value.toFixed(3);
+  if (type === "points") return Math.round(value).toLocaleString();
+  return value;
+}
+---
+
+<html>
+  <body>
+    <Nav />
+
+    <h1>&#127941; Hall of Fame</h1>
+
+    <h2>&#127942; Most Championships</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Total</th>
+      </tr>
+
+      {
+        hof.championshipLeaders.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{row.value}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>&#129352; Most Runner-Ups</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Total</th>
+      </tr>
+
+      {
+        hof.runnerUpLeaders.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{row.value}</td>
+          </tr>
+        ))
+      }
+    </table>
+<h2>&#128293; Best Single Season</h2>
+
+<div class="hof-card-grid">
+  {
+    hof.bestSingleSeasons.map((season, index) => (
+      <div class="hof-card">
+        <h3>#{index + 1} {season.owner} - {season.year}</h3>
+
+        <p>
+          <strong>
+            {season.wins}-{season.losses}
+            {season.ties > 0 ? `-${season.ties}` : ""}
+          </strong>
+          {" "}
+          Regular Season
+        </p>
+
+        <p>Win %: <strong>{season.winPct.toFixed(3)}</strong></p>
+        <p>Points For: <strong>{Math.round(season.pointsFor).toLocaleString()}</strong></p>
+        <p>Points Against: <strong>{Math.round(season.pointsAgainst).toLocaleString()}</strong></p>
+
+        <p>
+          <a href={`/owners/${slugifyOwner(season.owner)}`}>
+            Owner Page
+          </a>
+          {" | "}
+          <a href={`/seasons/${season.year}`}>
+            Season Page
+          </a>
+        </p>
+      </div>
+    ))
+  }
+</div>
+    <h2>&#128200; Highest Regular Season Win %</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Win %</th>
+        <th>GP</th>
+      </tr>
+
+      {
+        hof.winPctLeaders.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{formatValue(row.value, "pct")}</td>
+            <td>{row.gamesPlayed}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>&#127919; Most Regular Season Points</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Points</th>
+      </tr>
+
+      {
+        hof.pointsForLeaders.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{formatValue(row.value, "points")}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>&#127944; Most Regular Season Wins</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Wins</th>
+      </tr>
+
+      {
+        hof.winsLeaders.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{row.value}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>&#127942; Most Playoff Wins</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Wins</th>
+      </tr>
+
+      {
+        hof.playoffWinsLeaders.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{row.value}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>&#128701; Most Toilet Bowls</h2>
+
+    <table>
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Total</th>
+      </tr>
+
+      {
+        hof.toiletBowlLeaders.map((row, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{row.value}</td>
+          </tr>
+        ))
+      }
+    </table>
+  </body>
+</html>

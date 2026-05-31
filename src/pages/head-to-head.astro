@@ -1,0 +1,195 @@
+---
+import { getGameLog } from "../lib/data";
+import {
+  getOwnerList,
+  getHeadToHeadStats
+} from "../lib/stats";
+import "../styles/style.css";
+import Nav from "../components/Nav.astro";
+
+const gameLog = getGameLog();
+const owners = getOwnerList(gameLog);
+
+const matchupStats = {};
+
+for (const ownerA of owners) {
+  for (const ownerB of owners) {
+    if (ownerA.owner === ownerB.owner) continue;
+
+    const key = `${ownerA.owner}|||${ownerB.owner}`;
+    matchupStats[key] = getHeadToHeadStats(gameLog, ownerA.owner, ownerB.owner);
+  }
+}
+---
+
+<html>
+  <body>
+    <Nav />
+
+    <h1>Head-to-Head Matchup &#9876;</h1>
+
+    <label for="owner-a">Owner A:</label>
+    <select id="owner-a">
+      <option value="">Choose owner...</option>
+      {
+        owners.map(owner => (
+          <option value={owner.owner}>{owner.owner}</option>
+        ))
+      }
+    </select>
+
+    <label for="owner-b">Owner B:</label>
+    <select id="owner-b">
+      <option value="">Choose owner...</option>
+      {
+        owners.map(owner => (
+          <option value={owner.owner}>{owner.owner}</option>
+        ))
+      }
+    </select>
+
+    <div id="results"></div>
+
+    <script define:vars={{ matchupStats }}>
+      const ownerASelect = document.getElementById("owner-a");
+      const ownerBSelect = document.getElementById("owner-b");
+      const results = document.getElementById("results");
+
+      function formatRecord(aWins, bWins, ties) {
+        return ties > 0 ? `${aWins}-${bWins}-${ties}` : `${aWins}-${bWins}`;
+      }
+
+      function formatGame(game, ownerA, ownerB) {
+        if (!game) return "N/A";
+
+        return `${game.year} Week ${game.week}: ${ownerA} ${game.ownerAScore.toFixed(2)}, ${ownerB} ${game.ownerBScore.toFixed(2)} — Margin ${game.margin.toFixed(2)}`;
+      }
+
+      function render() {
+        const ownerA = ownerASelect.value;
+        const ownerB = ownerBSelect.value;
+
+        if (!ownerA || !ownerB) {
+          results.innerHTML = "";
+          return;
+        }
+
+        if (ownerA === ownerB) {
+          results.innerHTML = "<p>Please choose two different owners.</p>";
+          return;
+        }
+
+        const key = `${ownerA}|||${ownerB}`;
+        const stats = matchupStats[key];
+
+        if (!stats || stats.gamesPlayed === 0) {
+          results.innerHTML = `<p>No matchups found between ${ownerA} and ${ownerB}.</p>`;
+          return;
+        }
+
+        results.innerHTML = `
+          <h2>${ownerA} vs ${ownerB}</h2>
+
+          <table>
+            <tr>
+              <th>Category</th>
+              <th>Result</th>
+            </tr>
+            <tr>
+              <td>All-Time Record</td>
+              <td>${ownerA} leads/trails ${formatRecord(stats.ownerAWins, stats.ownerBWins, stats.ties)}</td>
+            </tr>
+            <tr>
+              <td>Games Played</td>
+              <td>${stats.gamesPlayed}</td>
+            </tr>
+            <tr>
+              <td>Total Points</td>
+              <td>${ownerA}: ${stats.ownerAPoints.toFixed(2)}<br />${ownerB}: ${stats.ownerBPoints.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Average Score</td>
+              <td>${ownerA}: ${stats.ownerAAverage.toFixed(2)}<br />${ownerB}: ${stats.ownerBAverage.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Regular Season Record</td>
+              <td>${formatRecord(stats.regular.ownerAWins, stats.regular.ownerBWins, stats.regular.ties)}</td>
+            </tr>
+            <tr>
+              <td>Playoff Record</td>
+              <td>${formatRecord(stats.playoffs.ownerAWins, stats.playoffs.ownerBWins, stats.playoffs.ties)}</td>
+            </tr>
+            <tr>
+              <td>Consolation Record</td>
+              <td>${formatRecord(stats.consolation.ownerAWins, stats.consolation.ownerBWins, stats.consolation.ties)}</td>
+            </tr>
+            <tr>
+              <td>Biggest ${ownerA} Win</td>
+              <td>${formatGame(stats.biggestOwnerAWin, ownerA, ownerB)}</td>
+            </tr>
+            <tr>
+              <td>Biggest ${ownerB} Win</td>
+              <td>${formatGame(stats.biggestOwnerBWin, ownerA, ownerB)}</td>
+            </tr>
+            <tr>
+              <td>Closest Game</td>
+              <td>${formatGame(stats.closestGame, ownerA, ownerB)}</td>
+            </tr>
+          </table>
+${
+  stats.championshipMeetings.length > 0
+    ? `
+      <h2>Championship Meetings</h2>
+      <table>
+        <tr>
+          <th>Year</th>
+          <th>${ownerA}</th>
+          <th>${ownerB}</th>
+          <th>Winner</th>
+        </tr>
+
+        ${stats.championshipMeetings.map(game => `
+          <tr>
+            <td>${game.year}</td>
+            <td>${game.ownerAScore.toFixed(2)}</td>
+            <td>${game.ownerBScore.toFixed(2)}</td>
+            <td>${game.winner}</td>
+          </tr>
+        `).join("")}
+      </table>
+    `
+    : ""
+}
+          <h2>Recent Meetings</h2>
+
+          <table>
+            <tr>
+              <th>Year</th>
+              <th>Week</th>
+              <th>Type</th>
+              <th>${ownerA}</th>
+              <th>${ownerB}</th>
+              <th>Winner</th>
+              <th>Margin</th>
+            </tr>
+
+            ${stats.recentGames.map(game => `
+              <tr>
+                <td>${game.year}</td>
+                <td>${game.week}</td>
+                <td>${game.gameType}</td>
+                <td>${game.ownerAScore.toFixed(2)}</td>
+                <td>${game.ownerBScore.toFixed(2)}</td>
+                <td>${game.winner}</td>
+                <td>${game.margin.toFixed(2)}</td>
+              </tr>
+            `).join("")}
+          </table>
+        `;
+      }
+
+      ownerASelect.addEventListener("change", render);
+      ownerBSelect.addEventListener("change", render);
+    </script>
+  </body>
+</html>

@@ -734,3 +734,235 @@ export function getOwnerSeasonRecords(games, ownerName, gameType = "R") {
     }
   };
 }
+
+export function getHeadToHeadStats(games, ownerA, ownerB) {
+  const matchups = games
+    .filter(game =>
+      (game.team1 === ownerA && game.team2 === ownerB) ||
+      (game.team1 === ownerB && game.team2 === ownerA)
+    )
+    .sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return b.week - a.week;
+    });
+
+  const stats = {
+    ownerA,
+    ownerB,
+    gamesPlayed: matchups.length,
+    ownerAWins: 0,
+    ownerBWins: 0,
+    ties: 0,
+    ownerAPoints: 0,
+    ownerBPoints: 0,
+    regular: { ownerAWins: 0, ownerBWins: 0, ties: 0, gamesPlayed: 0 },
+    playoffs: { ownerAWins: 0, ownerBWins: 0, ties: 0, gamesPlayed: 0 },
+    consolation: { ownerAWins: 0, ownerBWins: 0, ties: 0, gamesPlayed: 0 },
+    biggestOwnerAWin: null,
+    biggestOwnerBWin: null,
+    closestGame: null,
+    recentGames: [],
+    championshipMeetings: [],
+  };
+
+  for (const game of matchups) {
+    const ownerAIsTeam1 = game.team1 === ownerA;
+
+    const ownerAScore = ownerAIsTeam1 ? game.team1Score : game.team2Score;
+    const ownerBScore = ownerAIsTeam1 ? game.team2Score : game.team1Score;
+
+    stats.ownerAPoints += ownerAScore;
+    stats.ownerBPoints += ownerBScore;
+
+    const margin = Math.abs(ownerAScore - ownerBScore);
+
+    const gameSummary = {
+      year: game.year,
+      week: game.week,
+      gameType: game.gameType,
+      ownerAScore,
+      ownerBScore,
+      margin,
+      winner:
+        ownerAScore > ownerBScore
+          ? ownerA
+          : ownerBScore > ownerAScore
+            ? ownerB
+            : "Tie"
+    };
+      if (game.gameType === "P" && game.finalSeeding === 1) {
+  stats.championshipMeetings.push(gameSummary);
+    }
+    if (ownerAScore > ownerBScore) {
+      stats.ownerAWins++;
+
+      if (!stats.biggestOwnerAWin || margin > stats.biggestOwnerAWin.margin) {
+        stats.biggestOwnerAWin = gameSummary;
+      }
+    } else if (ownerBScore > ownerAScore) {
+      stats.ownerBWins++;
+
+      if (!stats.biggestOwnerBWin || margin > stats.biggestOwnerBWin.margin) {
+        stats.biggestOwnerBWin = gameSummary;
+      }
+    } else {
+      stats.ties++;
+    }
+
+    if (!stats.closestGame || margin < stats.closestGame.margin) {
+      stats.closestGame = gameSummary;
+    }
+stats.ownerAChampionshipWins =
+  stats.championshipMeetings.filter(
+    game => game.winner === ownerA
+  ).length;
+
+stats.ownerBChampionshipWins =
+  stats.championshipMeetings.filter(
+    game => game.winner === ownerB
+  ).length;
+    const bucket =
+      game.gameType === "R"
+        ? stats.regular
+        : game.gameType === "P"
+          ? stats.playoffs
+          : game.gameType === "C"
+            ? stats.consolation
+            : null;
+
+    if (bucket) {
+      bucket.gamesPlayed++;
+
+      if (ownerAScore > ownerBScore) {
+        bucket.ownerAWins++;
+      } else if (ownerBScore > ownerAScore) {
+        bucket.ownerBWins++;
+      } else {
+        bucket.ties++;
+      }
+    }
+
+    stats.recentGames.push(gameSummary);
+  }
+
+  stats.ownerAAverage =
+    stats.gamesPlayed > 0 ? stats.ownerAPoints / stats.gamesPlayed : 0;
+
+  stats.ownerBAverage =
+    stats.gamesPlayed > 0 ? stats.ownerBPoints / stats.gamesPlayed : 0;
+
+  stats.recentGames = stats.recentGames.slice(0, 15);
+
+  return stats;
+}
+
+export function getHallOfFameStats(games) {
+  const allRecords = calculateOwnerRecords(games);
+  const regularRecords = calculateOwnerRecords(
+    games.filter(game => game.gameType === "R")
+  );
+
+  const championships = calculateChampionships(games);
+  const toiletBowls = calculateToiletBowls(games);
+
+  const championshipLeaders = allRecords
+    .map(owner => ({
+      owner: owner.owner,
+      value: championships[owner.owner]?.championships ?? 0
+    }))
+    .filter(row => row.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3);
+
+  const runnerUpLeaders = allRecords
+    .map(owner => ({
+      owner: owner.owner,
+      value: championships[owner.owner]?.runnerUps ?? 0
+    }))
+    .filter(row => row.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3);
+
+  const toiletBowlLeaders = allRecords
+    .map(owner => ({
+      owner: owner.owner,
+      value: toiletBowls[owner.owner] ?? 0
+    }))
+    .filter(row => row.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3);
+
+  const winPctLeaders = regularRecords
+    .filter(owner => owner.gamesPlayed >= 50)
+    .map(owner => ({
+      owner: owner.owner,
+      value: owner.winPct,
+      gamesPlayed: owner.gamesPlayed
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3);
+
+  const pointsForLeaders = regularRecords
+    .map(owner => ({
+      owner: owner.owner,
+      value: owner.pointsFor
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3);
+
+  const winsLeaders = regularRecords
+    .map(owner => ({
+      owner: owner.owner,
+      value: owner.wins
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3);
+
+  const playoffRecords = calculateOwnerRecords(
+    games.filter(game => game.gameType === "P")
+  );
+
+  const playoffWinsLeaders = playoffRecords
+    .map(owner => ({
+      owner: owner.owner,
+      value: owner.wins
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3);
+const bestSingleSeasons = [];
+
+for (const owner of regularRecords) {
+  const ownerSeasonRecords = getOwnerSeasonRecords(games, owner.owner, "R");
+
+  for (const season of ownerSeasonRecords.seasons) {
+    bestSingleSeasons.push({
+      owner: owner.owner,
+      year: season.year,
+      wins: season.wins,
+      losses: season.losses,
+      ties: season.ties,
+      winPct: season.winPct,
+      pointsFor: season.pointsFor,
+      pointsAgainst: season.pointsAgainst,
+      gamesPlayed: season.gamesPlayed
+    });
+  }
+}
+
+bestSingleSeasons.sort((a, b) => {
+  if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+  if (b.wins !== a.wins) return b.wins - a.wins;
+  return b.pointsFor - a.pointsFor;
+});
+
+  return {
+    championshipLeaders,
+    runnerUpLeaders,
+    toiletBowlLeaders,
+    winPctLeaders,
+    pointsForLeaders,
+    winsLeaders,
+    playoffWinsLeaders,
+    bestSingleSeasons: bestSingleSeasons.slice(0, 3),
+  };
+}
