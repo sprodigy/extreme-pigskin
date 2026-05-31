@@ -6,44 +6,92 @@ import {
   calculateToiletBowls,
   slugifyOwner
 } from "../lib/stats";
+import "../styles/style.css";
+import Nav from "../components/Nav.astro";
 
 const gameLog = getGameLog();
 const owners = getOwners();
-
-const standings = calculateOwnerRecords(gameLog);
-const championships = calculateChampionships(gameLog);
-const toiletBowls = calculateToiletBowls(gameLog);
 
 const activeOwners = new Set(
   owners
     .filter(owner => owner.status === "ACTIVE")
     .map(owner => owner.owner)
 );
+
+const allStandings = calculateOwnerRecords(gameLog);
+const regularStandings = calculateOwnerRecords(
+  gameLog.filter(game => game.gameType === "R")
+);
+const playoffStandings = calculateOwnerRecords(
+  gameLog.filter(game => game.gameType === "P")
+);
+const consolationStandings = calculateOwnerRecords(
+  gameLog.filter(game => game.gameType === "C")
+);
+
+const championships = calculateChampionships(gameLog);
+const toiletBowls = calculateToiletBowls(gameLog);
+
+const allOwners = new Set([
+  ...allStandings.map(owner => owner.owner),
+  ...regularStandings.map(owner => owner.owner),
+  ...playoffStandings.map(owner => owner.owner),
+  ...consolationStandings.map(owner => owner.owner)
+]);
+
+const standingsByOwner = Array.from(allOwners)
+  .sort()
+  .map(ownerName => {
+    const all = allStandings.find(row => row.owner === ownerName);
+    const regular = regularStandings.find(row => row.owner === ownerName);
+    const playoffs = playoffStandings.find(row => row.owner === ownerName);
+    const consolation = consolationStandings.find(row => row.owner === ownerName);
+
+    return {
+      owner: ownerName,
+      all,
+      regular,
+      playoffs,
+      consolation
+    };
+  });
+
+function emptyRecord(ownerName) {
+  return {
+    owner: ownerName,
+    wins: 0,
+    losses: 0,
+    ties: 0,
+    winPct: 0,
+    pointsFor: 0,
+    pointsAgainst: 0,
+    gamesPlayed: 0
+  };
+}
 ---
 
 <html>
   <body>
+    <Nav />
+
     <h1>Fantasy League History</h1>
 
-    <p>
-      <a href="/champions">Championship History</a>
-    </p>
+    <h2 id="standings-title">All-Time Standings</h2>
 
-    <p>
-      <a href="/records">Record Book</a>
-    </p>
-
-    <p>
-      <a href="/seasons">Season Explorer</a>
-    </p>
-
-    <h2>All-Time Standings</h2>
-
-    <label for="owner-filter">Show:</label>
+    <label for="owner-filter">Owners:</label>
 
     <select id="owner-filter">
       <option value="all">All Owners</option>
       <option value="active">Active Owners</option>
+    </select>
+
+    <label for="game-type-filter">Game Type:</label>
+
+    <select id="game-type-filter">
+      <option value="all">All Games</option>
+      <option value="regular">Regular Season</option>
+      <option value="playoffs">Playoffs</option>
+      <option value="consolation">Consolation</option>
     </select>
 
     <table id="standings-table">
@@ -62,43 +110,74 @@ const activeOwners = new Set(
       </tr>
 
       {
-        standings.map(owner => {
+        standingsByOwner.map(ownerGroup => {
+          const all = ownerGroup.all ?? emptyRecord(ownerGroup.owner);
+          const regular = ownerGroup.regular ?? emptyRecord(ownerGroup.owner);
+          const playoffs = ownerGroup.playoffs ?? emptyRecord(ownerGroup.owner);
+          const consolation = ownerGroup.consolation ?? emptyRecord(ownerGroup.owner);
+
           const ownerChampionships =
-            championships[owner.owner]?.championships ?? 0;
+            championships[ownerGroup.owner]?.championships ?? 0;
 
           const ownerRunnerUps =
-            championships[owner.owner]?.runnerUps ?? 0;
+            championships[ownerGroup.owner]?.runnerUps ?? 0;
 
           const ownerToiletBowls =
-            toiletBowls[owner.owner] ?? 0;
+            toiletBowls[ownerGroup.owner] ?? 0;
 
           return (
             <tr
-              data-active={activeOwners.has(owner.owner) ? "true" : "false"}
-              data-owner={owner.owner}
-              data-wins={owner.wins}
-              data-losses={owner.losses}
-              data-ties={owner.ties}
-              data-winpct={owner.winPct}
-              data-pointsfor={owner.pointsFor}
-              data-pointsagainst={owner.pointsAgainst}
-              data-gamesplayed={owner.gamesPlayed}
+              data-active={activeOwners.has(ownerGroup.owner) ? "true" : "false"}
+
+              data-all-wins={all.wins}
+              data-all-losses={all.losses}
+              data-all-ties={all.ties}
+              data-all-winpct={all.winPct}
+              data-all-pointsfor={all.pointsFor}
+              data-all-pointsagainst={all.pointsAgainst}
+              data-all-gamesplayed={all.gamesPlayed}
+
+              data-regular-wins={regular.wins}
+              data-regular-losses={regular.losses}
+              data-regular-ties={regular.ties}
+              data-regular-winpct={regular.winPct}
+              data-regular-pointsfor={regular.pointsFor}
+              data-regular-pointsagainst={regular.pointsAgainst}
+              data-regular-gamesplayed={regular.gamesPlayed}
+
+              data-playoffs-wins={playoffs.wins}
+              data-playoffs-losses={playoffs.losses}
+              data-playoffs-ties={playoffs.ties}
+              data-playoffs-winpct={playoffs.winPct}
+              data-playoffs-pointsfor={playoffs.pointsFor}
+              data-playoffs-pointsagainst={playoffs.pointsAgainst}
+              data-playoffs-gamesplayed={playoffs.gamesPlayed}
+
+              data-consolation-wins={consolation.wins}
+              data-consolation-losses={consolation.losses}
+              data-consolation-ties={consolation.ties}
+              data-consolation-winpct={consolation.winPct}
+              data-consolation-pointsfor={consolation.pointsFor}
+              data-consolation-pointsagainst={consolation.pointsAgainst}
+              data-consolation-gamesplayed={consolation.gamesPlayed}
+
+              data-owner={ownerGroup.owner}
               data-championships={ownerChampionships}
               data-runnerups={ownerRunnerUps}
               data-toiletbowls={ownerToiletBowls}
             >
               <td>
-                <a href={`/owners/${slugifyOwner(owner.owner)}`}>
-                  {owner.owner}
+                <a href={`/owners/${slugifyOwner(ownerGroup.owner)}`}>
+                  {ownerGroup.owner}
                 </a>
               </td>
-              <td>{owner.wins}</td>
-              <td>{owner.losses}</td>
-              <td>{owner.ties}</td>
-              <td>{owner.winPct.toFixed(3)}</td>
-              <td>{Math.round(owner.pointsFor).toLocaleString()}</td>
-              <td>{Math.round(owner.pointsAgainst).toLocaleString()}</td>
-              <td>{owner.gamesPlayed}</td>
+              <td class="wins">{all.wins}</td>
+              <td class="losses">{all.losses}</td>
+              <td class="ties">{all.ties}</td>
+              <td class="winPct">{all.winPct.toFixed(3)}</td>
+              <td class="pointsFor">{Math.round(all.pointsFor).toLocaleString()}</td>
+              <td class="pointsAgainst">{Math.round(all.pointsAgainst).toLocaleString()}</td>
+              <td class="gamesPlayed">{all.gamesPlayed}</td>
               <td>{ownerChampionships}</td>
               <td>{ownerRunnerUps}</td>
               <td>{ownerToiletBowls}</td>
@@ -108,42 +187,77 @@ const activeOwners = new Set(
       }
     </table>
 
-    <style>
-      table {
-        border-collapse: collapse;
-        width: auto;
-        margin-top: 1rem;
-      }
-
-      th,
-      td {
-        border: 1px solid #ddd;
-        padding: 0.15rem 0.25rem;
-        text-align: left;
-        white-space: nowrap;
-      }
-
-      th {
-        background: #f5f5f5;
-        cursor: pointer;
-        user-select: none;
-      }
-
-      tr:nth-child(even) {
-        background: #fafafa;
-      }
-    </style>
-
     <script>
-      const filter = document.getElementById("owner-filter");
+      const ownerFilter = document.getElementById("owner-filter");
+      const gameTypeFilter = document.getElementById("game-type-filter");
       const table = document.getElementById("standings-table");
       const headers = table.querySelectorAll("th[data-sort]");
-      let sortColumn = "winpct";
+      const standingsTitle = document.getElementById("standings-title");
+
+      let sortColumn = "winPct";
       let sortDirection = "desc";
 
-      function applyFilter() {
+      const gameTypeLabels = {
+        all: "All Games",
+        regular: "Regular Season",
+        playoffs: "Playoffs",
+        consolation: "Consolation"
+      };
+
+      function updateTitle() {
+        standingsTitle.textContent =
+          `All-Time Standings (${gameTypeLabels[gameTypeFilter.value]})`;
+      }
+
+      function getRowValue(row, column) {
+        const gameType = gameTypeFilter.value;
+
+        if (column === "owner") {
+          return row.dataset.owner;
+        }
+
+        if (
+          column === "championships" ||
+          column === "runnerUps" ||
+          column === "toiletBowls"
+        ) {
+          return Number(row.dataset[column.toLowerCase()]);
+        }
+
+          return Number(row.getAttribute(`data-${gameType}-${column.toLowerCase()}`));
+      }
+
+function updateDisplayedStats() {
+  const gameType = gameTypeFilter.value;
+  const rows = table.querySelectorAll("tr[data-active]");
+
+  rows.forEach(row => {
+    row.querySelector(".wins").textContent =
+      row.getAttribute(`data-${gameType}-wins`);
+
+    row.querySelector(".losses").textContent =
+      row.getAttribute(`data-${gameType}-losses`);
+
+    row.querySelector(".ties").textContent =
+      row.getAttribute(`data-${gameType}-ties`);
+
+    row.querySelector(".winPct").textContent =
+      Number(row.getAttribute(`data-${gameType}-winpct`)).toFixed(3);
+
+    row.querySelector(".pointsFor").textContent =
+      Math.round(Number(row.getAttribute(`data-${gameType}-pointsfor`))).toLocaleString();
+
+    row.querySelector(".pointsAgainst").textContent =
+      Math.round(Number(row.getAttribute(`data-${gameType}-pointsagainst`))).toLocaleString();
+
+    row.querySelector(".gamesPlayed").textContent =
+      row.getAttribute(`data-${gameType}-gamesplayed`);
+  });
+}
+
+      function applyOwnerFilter() {
         const rows = table.querySelectorAll("tr[data-active]");
-        const value = filter.value;
+        const value = ownerFilter.value;
 
         rows.forEach(row => {
           const isActive = row.dataset.active === "true";
@@ -169,8 +283,8 @@ const activeOwners = new Set(
         }
 
         rows.sort((a, b) => {
-          const aValue = a.dataset[column.toLowerCase()];
-          const bValue = b.dataset[column.toLowerCase()];
+          const aValue = getRowValue(a, column);
+          const bValue = getRowValue(b, column);
 
           if (column === "owner") {
             return sortDirection === "asc"
@@ -178,26 +292,33 @@ const activeOwners = new Set(
               : bValue.localeCompare(aValue);
           }
 
-          const aNum = Number(aValue);
-          const bNum = Number(bValue);
-
           return sortDirection === "asc"
-            ? aNum - bNum
-            : bNum - aNum;
+            ? aValue - bValue
+            : bValue - aValue;
         });
 
         rows.forEach(row => table.appendChild(row));
 
-        applyFilter();
+        applyOwnerFilter();
       }
 
-      filter.addEventListener("change", applyFilter);
+      function refreshTable() {
+        updateTitle();
+        updateDisplayedStats();
+        sortTable(sortColumn);
+        applyOwnerFilter();
+      }
+
+      ownerFilter.addEventListener("change", applyOwnerFilter);
+      gameTypeFilter.addEventListener("change", refreshTable);
 
       headers.forEach(header => {
         header.addEventListener("click", () => {
           sortTable(header.dataset.sort);
         });
       });
+
+      updateTitle();
     </script>
   </body>
 </html>

@@ -1,4 +1,6 @@
 ---
+import "../styles/style.css";
+import Nav from "../components/Nav.astro";
 import { getGameLog } from "../lib/data";
 import { getRecordBook, slugifyOwner } from "../lib/stats";
 
@@ -8,8 +10,7 @@ const records = getRecordBook(gameLog);
 
 <html>
   <body>
-    <p><a href="/">← Back to Home</a></p>
-
+    <Nav />
     <h1>Record Book</h1>
 
     <h2>Highest Scores</h2>

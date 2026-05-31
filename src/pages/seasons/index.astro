@@ -1,4 +1,6 @@
 ---
+import "../../styles/style.css";
+import Nav from "../../components/Nav.astro";
 import { getGameLog } from "../../lib/data";
 import { getSeasonList } from "../../lib/stats";
 
@@ -8,8 +10,7 @@ const seasons = getSeasonList(gameLog);
 
 <html>
   <body>
-    <p><a href="/">← Back to Home</a></p>
-
+    <Nav />
     <h1>Season Explorer</h1>
 
     <p>Select a season:</p>

@@ -1,4 +1,6 @@
 ---
+import "../../styles/style.css";
+import Nav from "../../components/Nav.astro";
 import { getGameLog } from "../../lib/data";
 import {
   getOwnerList,
@@ -7,7 +9,8 @@ import {
   calculateChampionships,
   getOwnerChampionshipResults,
   getOpponentRecords,
-  getOwnerQuickFacts
+  getOwnerQuickFacts,
+  getOwnerSeasonRecords
 } from "../../lib/stats";
 
 export function getStaticPaths() {
@@ -26,6 +29,10 @@ export function getStaticPaths() {
 
 const gameLog = getGameLog();
 const { ownerName } = Astro.props;
+const regularSeasonRecords =
+  getOwnerSeasonRecords(gameLog, ownerName, "R");
+const playoffRecords =
+  getOwnerSeasonRecords(gameLog, ownerName, "P");
 
 const record = getOwnerRecord(gameLog, ownerName);
 const games = getGamesForOwner(gameLog, ownerName);
@@ -48,13 +55,14 @@ const rivalries =
 const sortedGames = [...games].sort((a, b) => {
   if (b.year !== a.year) return b.year - a.year;
   return b.week - a.week;
+
+  
 });
 ---
 
 <html>
   <body>
-    <p><a href="/">&larr; Back to Home</a></p>
-
+    <Nav />
     <h1>{ownerName}</h1>
 
     <h2>Quick Facts</h2>
@@ -184,7 +192,87 @@ const sortedGames = [...games].sort((a, b) => {
         ))
       }
     </table>
+<h2>Regular Season Record by Year</h2>
 
+<table>
+  <tr>
+    <th>Year</th>
+    <th>W</th>
+    <th>L</th>
+    <th>T</th>
+    <th>Pct</th>
+    <th>PF</th>
+    <th>PA</th>
+    <th>GP</th>
+  </tr>
+
+  {
+    regularSeasonRecords.seasons.map(season => (
+      <tr>
+        <td><a href={`/seasons/${season.year}`}>{season.year}</a></td>
+        <td>{season.wins}</td>
+        <td>{season.losses}</td>
+        <td>{season.ties}</td>
+        <td>{season.winPct.toFixed(3)}</td>
+        <td>{Math.round(season.pointsFor).toLocaleString()}</td>
+        <td>{Math.round(season.pointsAgainst).toLocaleString()}</td>
+        <td>{season.gamesPlayed}</td>
+      </tr>
+    ))
+  }
+
+<tr class="total-row">
+  <td>Total</td>
+  <td>{regularSeasonRecords.total.wins}</td>
+  <td>{regularSeasonRecords.total.losses}</td>
+  <td>{regularSeasonRecords.total.ties}</td>
+  <td>{regularSeasonRecords.total.winPct.toFixed(3)}</td>
+  <td>{Math.round(regularSeasonRecords.total.pointsFor).toLocaleString()}</td>
+  <td>{Math.round(regularSeasonRecords.total.pointsAgainst).toLocaleString()}</td>
+  <td>{regularSeasonRecords.total.gamesPlayed}</td>
+</tr>
+</table>
+
+<h2>Playoff Record by Year</h2>
+
+<table>
+  <tr>
+    <th>Year</th>
+    <th>W</th>
+    <th>L</th>
+    <th>T</th>
+    <th>Pct</th>
+    <th>PF</th>
+    <th>PA</th>
+    <th>GP</th>
+  </tr>
+
+  {
+    playoffRecords.seasons.map(season => (
+      <tr>
+        <td><a href={`/seasons/${season.year}`}>{season.year}</a></td>
+        <td>{season.wins}</td>
+        <td>{season.losses}</td>
+        <td>{season.ties}</td>
+        <td>{season.winPct.toFixed(3)}</td>
+        <td>{Math.round(season.pointsFor).toLocaleString()}</td>
+        <td>{Math.round(season.pointsAgainst).toLocaleString()}</td>
+        <td>{season.gamesPlayed}</td>
+      </tr>
+    ))
+  }
+
+  <tr class="total-row">
+  <td>Total</td>
+  <td>{playoffRecords.total.wins}</td>
+  <td>{playoffRecords.total.losses}</td>
+  <td>{playoffRecords.total.ties}</td>
+  <td>{playoffRecords.total.winPct.toFixed(3)}</td>
+  <td>{Math.round(playoffRecords.total.pointsFor).toLocaleString()}</td>
+  <td>{Math.round(playoffRecords.total.pointsAgainst).toLocaleString()}</td>
+  <td>{playoffRecords.total.gamesPlayed}</td>
+</tr>
+</table>
     <h2>Recent Games</h2>
 
     <table>
@@ -224,5 +312,6 @@ const sortedGames = [...games].sort((a, b) => {
         })
       }
     </table>
+    
   </body>
 </html>

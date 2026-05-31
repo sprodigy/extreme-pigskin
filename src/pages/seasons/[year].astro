@@ -1,6 +1,8 @@
 ---
 import { getGameLog } from "../../lib/data";
 import * as stats from "../../lib/stats";
+import "../../styles/style.css";
+import Nav from "../../components/Nav.astro";
 
 export function getStaticPaths() {
   const gameLog = getGameLog();
@@ -43,9 +45,7 @@ const slugifyOwner = stats.slugifyOwner;
 
 <html>
   <body>
-    <p><a href="/">&larr; Back to Home</a></p>
-    <p><a href="/seasons">&larr; Season Explorer</a></p>
-
+    <Nav />
     <h1>{year} Season</h1>
     <p>
   {

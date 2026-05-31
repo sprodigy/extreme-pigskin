@@ -692,3 +692,45 @@ const playoffSeasons = Array.from(
   };
 }
 
+export function getOwnerSeasonRecords(games, ownerName, gameType = "R") {
+  const ownerGames = getGamesForOwner(games, ownerName)
+    .filter(game => game.gameType === gameType);
+
+  const seasons = Array.from(
+    new Set(ownerGames.map(game => game.year))
+  ).sort((a, b) => b - a);
+
+  const seasonRecords = seasons.map(year => {
+    const seasonGames = ownerGames.filter(game => game.year === year);
+
+    const record = calculateOwnerRecords(seasonGames)
+      .find(row => row.owner === ownerName);
+
+    return {
+      year,
+      wins: record?.wins ?? 0,
+      losses: record?.losses ?? 0,
+      ties: record?.ties ?? 0,
+      winPct: record?.winPct ?? 0,
+      pointsFor: record?.pointsFor ?? 0,
+      pointsAgainst: record?.pointsAgainst ?? 0,
+      gamesPlayed: record?.gamesPlayed ?? 0
+    };
+  });
+
+  const total = calculateOwnerRecords(ownerGames)
+    .find(row => row.owner === ownerName);
+
+  return {
+    seasons: seasonRecords,
+    total: {
+      wins: total?.wins ?? 0,
+      losses: total?.losses ?? 0,
+      ties: total?.ties ?? 0,
+      winPct: total?.winPct ?? 0,
+      pointsFor: total?.pointsFor ?? 0,
+      pointsAgainst: total?.pointsAgainst ?? 0,
+      gamesPlayed: total?.gamesPlayed ?? 0
+    }
+  };
+}
