@@ -6,12 +6,12 @@ import {
   getOwnerRecord,
   calculateChampionships,
   getOwnerChampionshipResults,
-  getOpponentRecords
+  getOpponentRecords,
+  getOwnerQuickFacts
 } from "../../lib/stats";
 
 export function getStaticPaths() {
   const gameLog = getGameLog();
-
   const owners = getOwnerList(gameLog);
 
   return owners.map(owner => ({
@@ -25,11 +25,11 @@ export function getStaticPaths() {
 }
 
 const gameLog = getGameLog();
-
 const { ownerName } = Astro.props;
 
 const record = getOwnerRecord(gameLog, ownerName);
 const games = getGamesForOwner(gameLog, ownerName);
+const quickFacts = getOwnerQuickFacts(gameLog, ownerName);
 
 const championships = calculateChampionships(gameLog);
 
@@ -53,27 +53,90 @@ const sortedGames = [...games].sort((a, b) => {
 
 <html>
   <body>
-    <p><a href="/">← Back to Home</a></p>
+    <p><a href="/">&larr; Back to Home</a></p>
 
     <h1>{ownerName}</h1>
 
+    <h2>Quick Facts</h2>
+
+    <ul>
+      <li>Seasons Played: <strong>{quickFacts.seasonsPlayed}</strong></li>
+
+      <li>
+        Best Finish:
+        <strong>
+          {
+            quickFacts.bestFinish
+              ? `${quickFacts.bestFinish.finish}${quickFacts.bestFinish.finish === 1 ? "st" : quickFacts.bestFinish.finish === 2 ? "nd" : quickFacts.bestFinish.finish === 3 ? "rd" : "th"} in ${quickFacts.bestFinish.year}`
+              : "N/A"
+          }
+        </strong>
+      </li>
+
+      <li>Postseason Appearances: <strong>{quickFacts.postseasonAppearances}</strong></li>
+      <li>Championship Appearances: <strong>{quickFacts.championshipAppearances}</strong></li>
+      <li>Toilet Bowl Appearances: <strong>{quickFacts.toiletBowlAppearances}</strong></li>
+      <li>Toilet Bowls Won: <strong>{quickFacts.toiletBowlsWon}</strong></li>
+      <li>Swept the League: <strong>{quickFacts.sweptLeague.length}</strong></li>
+      <li>Swept by the League: <strong>{quickFacts.sweptByLeague.length}</strong></li>
+
+      <li>
+        Best Regular Season:
+        <strong>
+          {quickFacts.bestRegularSeason.wins}-{quickFacts.bestRegularSeason.losses}
+          {quickFacts.bestRegularSeason.ties > 0 ? `-${quickFacts.bestRegularSeason.ties}` : ""}
+          in {quickFacts.bestRegularSeason.year}
+        </strong>
+      </li>
+
+      <li>
+        Worst Regular Season:
+        <strong>
+          {quickFacts.worstRegularSeason.wins}-{quickFacts.worstRegularSeason.losses}
+          {quickFacts.worstRegularSeason.ties > 0 ? `-${quickFacts.worstRegularSeason.ties}` : ""}
+          in {quickFacts.worstRegularSeason.year}
+        </strong>
+      </li>
+
+      <li>
+        Highest Scoring Week:
+        <strong>
+          {quickFacts.highestScoringWeek.score.toFixed(2)}
+          vs {quickFacts.highestScoringWeek.opponent}
+          ({quickFacts.highestScoringWeek.year}, Week {quickFacts.highestScoringWeek.week})
+        </strong>
+      </li>
+
+      <li>
+        Lowest Scoring Week:
+        <strong>
+          {quickFacts.lowestScoringWeek.score.toFixed(2)}
+          vs {quickFacts.lowestScoringWeek.opponent}
+          ({quickFacts.lowestScoringWeek.year}, Week {quickFacts.lowestScoringWeek.week})
+        </strong>
+      </li>
+
+      <li>
+        Longest Winning Streak:
+        <strong>{quickFacts.longestWinningStreak.games}</strong>
+      </li>
+
+      <li>
+        Longest Losing Streak:
+        <strong>{quickFacts.longestLosingStreak.games}</strong>
+      </li>
+    </ul>
+
     <h2>League Achievements</h2>
 
-    <p>
-      Championships: <strong>{ownerTitles}</strong>
-    </p>
-
-    <p>
-      Runner-Ups: <strong>{ownerRunnerUps}</strong>
-    </p>
+    <p>Championships: <strong>{ownerTitles}</strong></p>
+    <p>Runner-Ups: <strong>{ownerRunnerUps}</strong></p>
 
     {
       championshipResults.championshipSeasons.length > 0 && (
         <p>
           Championship Seasons:{" "}
-          <strong>
-            {championshipResults.championshipSeasons.join(", ")}
-          </strong>
+          <strong>{championshipResults.championshipSeasons.join(", ")}</strong>
         </p>
       )
     }
@@ -82,9 +145,7 @@ const sortedGames = [...games].sort((a, b) => {
       championshipResults.runnerUpSeasons.length > 0 && (
         <p>
           Runner-Up Seasons:{" "}
-          <strong>
-            {championshipResults.runnerUpSeasons.join(", ")}
-          </strong>
+          <strong>{championshipResults.runnerUpSeasons.join(", ")}</strong>
         </p>
       )
     }
@@ -98,14 +159,8 @@ const sortedGames = [...games].sort((a, b) => {
     </p>
 
     <p>Games Played: {record.gamesPlayed}</p>
-
-    <p>
-      Points For: {record.pointsFor.toFixed(2)}
-    </p>
-
-    <p>
-      Points Against: {record.pointsAgainst.toFixed(2)}
-    </p>
+    <p>Points For: {record.pointsFor.toFixed(2)}</p>
+    <p>Points Against: {record.pointsAgainst.toFixed(2)}</p>
 
     <h2>Rivalries</h2>
 
@@ -145,17 +200,9 @@ const sortedGames = [...games].sort((a, b) => {
         sortedGames.slice(0, 20).map(game => {
           const isTeam1 = game.team1 === ownerName;
 
-          const ownerScore = isTeam1
-            ? game.team1Score
-            : game.team2Score;
-
-          const opponent = isTeam1
-            ? game.team2
-            : game.team1;
-
-          const opponentScore = isTeam1
-            ? game.team2Score
-            : game.team1Score;
+          const ownerScore = isTeam1 ? game.team1Score : game.team2Score;
+          const opponent = isTeam1 ? game.team2 : game.team1;
+          const opponentScore = isTeam1 ? game.team2Score : game.team1Score;
 
           let result = "T";
 
@@ -170,15 +217,12 @@ const sortedGames = [...games].sort((a, b) => {
               <td>{game.year}</td>
               <td>{game.week}</td>
               <td>{opponent}</td>
-              <td>
-                {ownerScore.toFixed(2)} - {opponentScore.toFixed(2)}
-              </td>
+              <td>{ownerScore.toFixed(2)} - {opponentScore.toFixed(2)}</td>
               <td>{result}</td>
             </tr>
           );
         })
       }
     </table>
-
   </body>
 </html>

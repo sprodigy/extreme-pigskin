@@ -495,3 +495,200 @@ export function calculateToiletBowls(games) {
 
   return toiletBowls;
 }
+
+export function getOwnerQuickFacts(games, ownerName) {
+  const ownerGames = getGamesForOwner(games, ownerName);
+  const seasons = Array.from(new Set(ownerGames.map(game => game.year))).sort((a, b) => a - b);
+
+const playoffGames = ownerGames.filter(game => game.gameType === "P");
+
+const playoffSeasons = Array.from(
+  new Set(playoffGames.map(game => game.year))
+);
+  const championshipGames = ownerGames.filter(
+    game => game.gameType === "P" && game.finalSeeding === 1
+  );
+
+  const toiletBowlGames = ownerGames.filter(game => {
+    if (game.gameType !== "C") return false;
+
+    const seasonFinishers = getSeasonFinishers(games, game.year);
+
+    return (
+      game.finalSeeding === seasonFinishers.toiletBowlSeeding &&
+      (game.team1 === ownerName || game.team2 === ownerName)
+    );
+  });
+
+  const toiletBowlsWon = calculateToiletBowls(games)[ownerName] ?? 0;
+
+  const regularSeasonByYear = seasons.map(year => {
+    const seasonGames = ownerGames.filter(
+      game => game.year === year && game.gameType === "R"
+    );
+
+    const record = calculateOwnerRecords(seasonGames)
+      .find(row => row.owner === ownerName);
+
+    return {
+      year,
+      wins: record?.wins ?? 0,
+      losses: record?.losses ?? 0,
+      ties: record?.ties ?? 0,
+      winPct: record?.winPct ?? 0,
+      pointsFor: record?.pointsFor ?? 0,
+      gamesPlayed: record?.gamesPlayed ?? 0
+    };
+  });
+
+  const bestRegularSeason = [...regularSeasonByYear]
+    .sort((a, b) => {
+      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.pointsFor - a.pointsFor;
+    })[0];
+
+  const worstRegularSeason = [...regularSeasonByYear]
+    .filter(row => row.gamesPlayed > 0)
+    .sort((a, b) => {
+      if (a.winPct !== b.winPct) return a.winPct - b.winPct;
+      if (a.wins !== b.wins) return a.wins - b.wins;
+      return a.pointsFor - b.pointsFor;
+    })[0];
+
+  const sweptLeagueSeasons = regularSeasonByYear.filter(
+    row => row.gamesPlayed > 0 && row.losses === 0 && row.ties === 0
+  );
+
+  const sweptByLeagueSeasons = regularSeasonByYear.filter(
+    row => row.gamesPlayed > 0 && row.wins === 0 && row.ties === 0
+  );
+
+  const ownerScores = ownerGames.flatMap(game => {
+    const isTeam1 = game.team1 === ownerName;
+
+    return [{
+      year: game.year,
+      week: game.week,
+      score: isTeam1 ? game.team1Score : game.team2Score,
+      opponent: isTeam1 ? game.team2 : game.team1,
+      opponentScore: isTeam1 ? game.team2Score : game.team1Score,
+      gameType: game.gameType
+    }];
+  });
+
+  const highestScoringWeek = [...ownerScores]
+    .sort((a, b) => b.score - a.score)[0];
+
+  const lowestScoringWeek = [...ownerScores]
+    .sort((a, b) => a.score - b.score)[0];
+
+  const sortedOwnerGames = [...ownerGames].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    if (a.week !== b.week) return a.week - b.week;
+    return a.gameId - b.gameId;
+  });
+
+  function getResult(game) {
+    const isTeam1 = game.team1 === ownerName;
+    const ownerScore = isTeam1 ? game.team1Score : game.team2Score;
+    const opponentScore = isTeam1 ? game.team2Score : game.team1Score;
+
+    if (ownerScore > opponentScore) return "W";
+    if (ownerScore < opponentScore) return "L";
+    return "T";
+  }
+
+  function getLongestStreak(targetResult) {
+    let current = 0;
+    let longest = 0;
+    let currentStart = null;
+    let longestStart = null;
+    let longestEnd = null;
+
+    for (const game of sortedOwnerGames) {
+      const result = getResult(game);
+
+      if (result === targetResult) {
+        if (current === 0) {
+          currentStart = { year: game.year, week: game.week };
+        }
+
+        current++;
+
+        if (current > longest) {
+          longest = current;
+          longestStart = currentStart;
+          longestEnd = { year: game.year, week: game.week };
+        }
+      } else {
+        current = 0;
+        currentStart = null;
+      }
+    }
+
+    return {
+      games: longest,
+      start: longestStart,
+      end: longestEnd
+    };
+  }
+
+  function getFinalFinishForYear(year) {
+    const seasonFinishers = getSeasonFinishers(games, year);
+
+    if (seasonFinishers.champion === ownerName) return 1;
+    if (seasonFinishers.runnerUp === ownerName) return 2;
+
+    const placementGames = getPlayoffGamesForSeason(games, year)
+      .filter(game => Number(game.finalSeeding) > 0)
+      .filter(game => game.team1 === ownerName || game.team2 === ownerName);
+
+    if (placementGames.length === 0) return null;
+
+    const finalGame = placementGames
+      .sort((a, b) => Number(a.finalSeeding) - Number(b.finalSeeding))[0];
+
+    const isTeam1 = finalGame.team1 === ownerName;
+    const ownerScore = isTeam1 ? finalGame.team1Score : finalGame.team2Score;
+    const opponentScore = isTeam1 ? finalGame.team2Score : finalGame.team1Score;
+
+    return ownerScore > opponentScore
+      ? Number(finalGame.finalSeeding)
+      : Number(finalGame.finalSeeding) + 1;
+  }
+
+  const finishes = seasons
+    .map(year => ({
+      year,
+      finish: getFinalFinishForYear(year)
+    }))
+    .filter(row => row.finish !== null);
+
+  const bestFinish = finishes
+    .sort((a, b) => a.finish - b.finish)[0];
+
+  return {
+    seasonsPlayed: seasons.length,
+    bestFinish,
+
+    postseasonAppearances: playoffGames.length,
+    championshipAppearances: championshipGames.length,
+
+    toiletBowlAppearances: toiletBowlGames.length,
+    toiletBowlsWon,
+
+    sweptByLeague: sweptByLeagueSeasons,
+    sweptLeague: sweptLeagueSeasons,
+
+    bestRegularSeason,
+    worstRegularSeason,
+
+    highestScoringWeek,
+    lowestScoringWeek,
+
+    longestWinningStreak: getLongestStreak("W"),
+    longestLosingStreak: getLongestStreak("L")
+  };
+}
+
