@@ -2,7 +2,6 @@ export function calculateOwnerRecords(games) {
   const owners = {};
 
   for (const game of games) {
-
     const team1 = game.team1;
     const team2 = game.team2;
 
@@ -53,10 +52,7 @@ export function calculateOwnerRecords(games) {
   return Object.values(owners)
     .map(owner => ({
       ...owner,
-      winPct:
-        owner.gamesPlayed > 0
-          ? owner.wins / owner.gamesPlayed
-          : 0
+      winPct: owner.gamesPlayed > 0 ? owner.wins / owner.gamesPlayed : 0
     }))
     .sort((a, b) => b.winPct - a.winPct);
 }
@@ -96,25 +92,57 @@ export function getOwnerRecord(games, ownerName) {
   return records.find(record => record.owner === ownerName);
 }
 
+export function getSeasonList(games) {
+  return Array.from(new Set(games.map(game => game.year)))
+    .sort((a, b) => b - a);
+}
+
+export function getGamesForSeason(games, year) {
+  return games
+    .filter(game => game.year === Number(year))
+    .sort((a, b) => {
+      if (a.week !== b.week) return a.week - b.week;
+      return a.gameId - b.gameId;
+    });
+}
+
+export function calculateSeasonStandings(games, year) {
+  const seasonGames = getGamesForSeason(games, year);
+
+  return calculateOwnerRecords(seasonGames)
+    .sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+      return b.pointsFor - a.pointsFor;
+    });
+}
+
+export function calculateRegularSeasonStandings(games, year) {
+  const regularSeasonGames = getGamesForSeason(games, year)
+    .filter(game => game.gameType === "R");
+
+  return calculateOwnerRecords(regularSeasonGames)
+    .sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+      return b.pointsFor - a.pointsFor;
+    });
+}
+
+export function getPlayoffGamesForSeason(games, year) {
+  return getGamesForSeason(games, year)
+    .filter(game => game.gameType === "P" || game.gameType === "C");
+}
+
 export function calculateChampionships(games) {
   const championships = {};
 
   for (const game of games) {
+    if (game.gameType === "P" && game.finalSeeding === 1) {
+      const team1Won = game.team1Score > game.team2Score;
 
-    if (
-      game.gameType === "P" &&
-      game.finalSeeding === 1
-    ) {
-
-      const winner =
-        game.team1Score > game.team2Score
-          ? game.team1
-          : game.team2;
-
-      const runnerUp =
-        game.team1Score > game.team2Score
-          ? game.team2
-          : game.team1;
+      const winner = team1Won ? game.team1 : game.team2;
+      const runnerUp = team1Won ? game.team2 : game.team1;
 
       if (!championships[winner]) {
         championships[winner] = {
@@ -138,6 +166,25 @@ export function calculateChampionships(games) {
   return championships;
 }
 
+export function getChampionshipGames(games) {
+  return games
+    .filter(game => game.gameType === "P" && game.finalSeeding === 1)
+    .map(game => {
+      const team1Won = game.team1Score > game.team2Score;
+
+      return {
+        year: game.year,
+        week: game.week,
+        champion: team1Won ? game.team1 : game.team2,
+        runnerUp: team1Won ? game.team2 : game.team1,
+        championScore: team1Won ? game.team1Score : game.team2Score,
+        runnerUpScore: team1Won ? game.team2Score : game.team1Score,
+        margin: Math.abs(game.team1Score - game.team2Score)
+      };
+    })
+    .sort((a, b) => b.year - a.year);
+}
+
 export function getOwnerChampionshipResults(games, ownerName) {
   const results = {
     championshipSeasons: [],
@@ -150,7 +197,6 @@ export function getOwnerChampionshipResults(games, ownerName) {
     }
 
     const team1Won = game.team1Score > game.team2Score;
-
     const champion = team1Won ? game.team1 : game.team2;
     const runnerUp = team1Won ? game.team2 : game.team1;
 
@@ -169,23 +215,72 @@ export function getOwnerChampionshipResults(games, ownerName) {
   return results;
 }
 
-export function getChampionshipGames(games) {
-  return games
-    .filter(game => game.gameType === "P" && game.finalSeeding === 1)
-    .map(game => {
-      const team1Won = game.team1Score > game.team2Score;
+export function getSeasonFinishers(games, year) {
+  const playoffGames = getPlayoffGamesForSeason(games, year);
 
-      return {
-        year: game.year,
-        week: game.week,
-        champion: team1Won ? game.team1 : game.team2,
-        runnerUp: team1Won ? game.team2 : game.team1,
-        championScore: team1Won ? game.team1Score : game.team2Score,
-        runnerUpScore: team1Won ? game.team2Score : game.team1Score,
-        margin: Math.abs(game.team1Score - game.team2Score)
-      };
-    })
-    .sort((a, b) => b.year - a.year);
+  const championshipGame = playoffGames.find(
+    game => game.gameType === "P" && game.finalSeeding === 1
+  );
+
+  const consolationPlacementGames = playoffGames
+    .filter(game => game.gameType === "C")
+    .filter(game => Number(game.finalSeeding) > 0);
+
+  const toiletBowlGame = consolationPlacementGames
+    .sort((a, b) => Number(b.finalSeeding) - Number(a.finalSeeding))[0];
+
+  function getWinnerLoser(game) {
+    if (!game) return null;
+
+    const team1Won = game.team1Score > game.team2Score;
+
+    return {
+      winner: team1Won ? game.team1 : game.team2,
+      loser: team1Won ? game.team2 : game.team1,
+      winnerScore: team1Won ? game.team1Score : game.team2Score,
+      loserScore: team1Won ? game.team2Score : game.team1Score,
+      finalSeeding: Number(game.finalSeeding)
+    };
+  }
+
+  const championship = getWinnerLoser(championshipGame);
+  const toiletBowl = getWinnerLoser(toiletBowlGame);
+
+  return {
+    champion: championship?.winner ?? null,
+    runnerUp: championship?.loser ?? null,
+    championScore: championship?.winnerScore ?? null,
+    runnerUpScore: championship?.loserScore ?? null,
+
+    toiletBowlWinner: toiletBowl?.winner ?? null,
+    toiletBowlLoser: toiletBowl?.loser ?? null,
+    toiletBowlWinnerScore: toiletBowl?.winnerScore ?? null,
+    toiletBowlLoserScore: toiletBowl?.loserScore ?? null,
+    toiletBowlSeeding: toiletBowl?.finalSeeding ?? null
+  };
+}
+
+export function calculateLastPlaceFinishes(games) {
+  const lastPlaces = {};
+  const seasons = getSeasonList(games);
+
+  for (const year of seasons) {
+    const seasonFinishers = getSeasonFinishers(games, year);
+
+    if (!seasonFinishers.toiletBowlLoser) continue;
+
+    if (!lastPlaces[seasonFinishers.toiletBowlLoser]) {
+      lastPlaces[seasonFinishers.toiletBowlLoser] = 0;
+    }
+
+    lastPlaces[seasonFinishers.toiletBowlLoser]++;
+  }
+
+  return lastPlaces;
+}
+
+export function calculateToiletBowls(games) {
+  return calculateLastPlaceFinishes(games);
 }
 
 export function getOpponentRecords(games, ownerName) {
@@ -236,10 +331,7 @@ export function getOpponentRecords(games, ownerName) {
   return Object.values(rivals)
     .map(rival => ({
       ...rival,
-      winPct:
-        rival.gamesPlayed > 0
-          ? rival.wins / rival.gamesPlayed
-          : 0
+      winPct: rival.gamesPlayed > 0 ? rival.wins / rival.gamesPlayed : 0
     }))
     .sort((a, b) => b.gamesPlayed - a.gamesPlayed);
 }
@@ -273,48 +365,31 @@ export function getRecordBook(games) {
     };
   });
 
+  const ownerScores = gameRecords.flatMap(game => [
+    {
+      owner: game.team1,
+      score: game.team1Score,
+      opponent: game.team2,
+      opponentScore: game.team2Score,
+      year: game.year,
+      week: game.week
+    },
+    {
+      owner: game.team2,
+      score: game.team2Score,
+      opponent: game.team1,
+      opponentScore: game.team1Score,
+      year: game.year,
+      week: game.week
+    }
+  ]);
+
   return {
-    highestScores: [...gameRecords]
-      .flatMap(game => [
-        {
-          owner: game.team1,
-          score: game.team1Score,
-          opponent: game.team2,
-          opponentScore: game.team2Score,
-          year: game.year,
-          week: game.week
-        },
-        {
-          owner: game.team2,
-          score: game.team2Score,
-          opponent: game.team1,
-          opponentScore: game.team1Score,
-          year: game.year,
-          week: game.week
-        }
-      ])
+    highestScores: [...ownerScores]
       .sort((a, b) => b.score - a.score)
       .slice(0, 10),
 
-    lowestScores: [...gameRecords]
-      .flatMap(game => [
-        {
-          owner: game.team1,
-          score: game.team1Score,
-          opponent: game.team2,
-          opponentScore: game.team2Score,
-          year: game.year,
-          week: game.week
-        },
-        {
-          owner: game.team2,
-          score: game.team2Score,
-          opponent: game.team1,
-          opponentScore: game.team1Score,
-          year: game.year,
-          week: game.week
-        }
-      ])
+    lowestScores: [...ownerScores]
       .sort((a, b) => a.score - b.score)
       .slice(0, 10),
 
@@ -335,92 +410,6 @@ export function getRecordBook(games) {
       .filter(game => game.winnerScore > game.loserScore)
       .sort((a, b) => a.winnerScore - b.winnerScore)
       .slice(0, 10)
-  };
-}
-
-export function getSeasonList(games) {
-  return Array.from(new Set(games.map(game => game.year)))
-    .sort((a, b) => b - a);
-}
-
-export function getGamesForSeason(games, year) {
-  return games
-    .filter(game => game.year === Number(year))
-    .sort((a, b) => {
-      if (a.week !== b.week) return a.week - b.week;
-      return a.gameId - b.gameId;
-    });
-}
-
-export function calculateSeasonStandings(games, year) {
-  const seasonGames = getGamesForSeason(games, year);
-
-  return calculateOwnerRecords(seasonGames)
-    .sort((a, b) => {
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
-      return b.pointsFor - a.pointsFor;
-    });
-}
-export function calculateRegularSeasonStandings(games, year) {
-  const regularSeasonGames = getGamesForSeason(games, year)
-    .filter(game => game.gameType === "R");
-
-  return calculateOwnerRecords(regularSeasonGames)
-    .sort((a, b) => {
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
-      return b.pointsFor - a.pointsFor;
-    });
-}
-
-export function getPlayoffGamesForSeason(games, year) {
-  return getGamesForSeason(games, year)
-    .filter(game => game.gameType === "P" || game.gameType === "C");
-}
-
-export function getSeasonFinishers(games, year) {
-  const playoffGames = getPlayoffGamesForSeason(games, year);
-
-  const championshipGame = playoffGames.find(
-    game => game.gameType === "P" && game.finalSeeding === 1
-  );
-
-  const consolationPlacementGames = playoffGames
-    .filter(game => game.gameType === "C")
-    .filter(game => Number(game.finalSeeding) > 0);
-
-  const toiletBowlGame = consolationPlacementGames
-    .sort((a, b) => Number(b.finalSeeding) - Number(a.finalSeeding))[0];
-
-  function getWinnerLoser(game) {
-    if (!game) return null;
-
-    const team1Won = game.team1Score > game.team2Score;
-
-    return {
-      winner: team1Won ? game.team1 : game.team2,
-      loser: team1Won ? game.team2 : game.team1,
-      winnerScore: team1Won ? game.team1Score : game.team2Score,
-      loserScore: team1Won ? game.team2Score : game.team1Score,
-      finalSeeding: game.finalSeeding
-    };
-  }
-
-  const championship = getWinnerLoser(championshipGame);
-  const toiletBowl = getWinnerLoser(toiletBowlGame);
-
-  return {
-    champion: championship?.winner ?? null,
-    runnerUp: championship?.loser ?? null,
-    championScore: championship?.winnerScore ?? null,
-    runnerUpScore: championship?.loserScore ?? null,
-
-    toiletBowlWinner: toiletBowl?.winner ?? null,
-    toiletBowlLoser: toiletBowl?.loser ?? null,
-    toiletBowlWinnerScore: toiletBowl?.winnerScore ?? null,
-    toiletBowlLoserScore: toiletBowl?.loserScore ?? null,
-    toiletBowlSeeding: toiletBowl?.finalSeeding ?? null
   };
 }
 
@@ -454,8 +443,7 @@ export function getTopTeamsByWeek(games, year) {
 
   return Object.entries(weeklyScores)
     .map(([week, scores]) => {
-      const topScore = scores
-        .sort((a, b) => b.score - a.score)[0];
+      const topScore = scores.sort((a, b) => b.score - a.score)[0];
 
       return {
         week: Number(week),
@@ -465,46 +453,60 @@ export function getTopTeamsByWeek(games, year) {
     .sort((a, b) => a.week - b.week);
 }
 
-export function calculateToiletBowls(games) {
-  const toiletBowls = {};
+export function getOwnerSeasonRecords(games, ownerName, gameType = "R") {
+  const ownerGames = getGamesForOwner(games, ownerName)
+    .filter(game => game.gameType === gameType);
 
-  const seasons = getSeasonList(games);
+  const seasons = Array.from(
+    new Set(ownerGames.map(game => game.year))
+  ).sort((a, b) => b - a);
 
-  for (const year of seasons) {
-    const playoffGames = getPlayoffGamesForSeason(games, year);
+  const seasonRecords = seasons.map(year => {
+    const seasonGames = ownerGames.filter(game => game.year === year);
 
-    const consolationPlacementGames = playoffGames
-      .filter(game => game.gameType === "C")
-      .filter(game => Number(game.finalSeeding) > 0);
+    const record = calculateOwnerRecords(seasonGames)
+      .find(row => row.owner === ownerName);
 
-    const toiletBowlGame = consolationPlacementGames
-      .sort((a, b) => Number(b.finalSeeding) - Number(a.finalSeeding))[0];
+    return {
+      year,
+      wins: record?.wins ?? 0,
+      losses: record?.losses ?? 0,
+      ties: record?.ties ?? 0,
+      winPct: record?.winPct ?? 0,
+      pointsFor: record?.pointsFor ?? 0,
+      pointsAgainst: record?.pointsAgainst ?? 0,
+      gamesPlayed: record?.gamesPlayed ?? 0
+    };
+  });
 
-    if (!toiletBowlGame) continue;
+  const total = calculateOwnerRecords(ownerGames)
+    .find(row => row.owner === ownerName);
 
-    const team1Won = toiletBowlGame.team1Score > toiletBowlGame.team2Score;
-
-    const winner = team1Won ? toiletBowlGame.team1 : toiletBowlGame.team2;
-
-    if (!toiletBowls[winner]) {
-      toiletBowls[winner] = 0;
+  return {
+    seasons: seasonRecords,
+    total: {
+      wins: total?.wins ?? 0,
+      losses: total?.losses ?? 0,
+      ties: total?.ties ?? 0,
+      winPct: total?.winPct ?? 0,
+      pointsFor: total?.pointsFor ?? 0,
+      pointsAgainst: total?.pointsAgainst ?? 0,
+      gamesPlayed: total?.gamesPlayed ?? 0
     }
-
-    toiletBowls[winner]++;
-  }
-
-  return toiletBowls;
+  };
 }
 
 export function getOwnerQuickFacts(games, ownerName) {
   const ownerGames = getGamesForOwner(games, ownerName);
-  const seasons = Array.from(new Set(ownerGames.map(game => game.year))).sort((a, b) => a - b);
+  const seasons = Array.from(new Set(ownerGames.map(game => game.year)))
+    .sort((a, b) => a - b);
 
-const playoffGames = ownerGames.filter(game => game.gameType === "P");
+  const playoffGames = ownerGames.filter(game => game.gameType === "P");
 
-const playoffSeasons = Array.from(
-  new Set(playoffGames.map(game => game.year))
-);
+  const playoffSeasons = Array.from(
+    new Set(playoffGames.map(game => game.year))
+  );
+
   const championshipGames = ownerGames.filter(
     game => game.gameType === "P" && game.finalSeeding === 1
   );
@@ -515,12 +517,13 @@ const playoffSeasons = Array.from(
     const seasonFinishers = getSeasonFinishers(games, game.year);
 
     return (
-      game.finalSeeding === seasonFinishers.toiletBowlSeeding &&
+      Number(game.finalSeeding) === Number(seasonFinishers.toiletBowlSeeding) &&
       (game.team1 === ownerName || game.team2 === ownerName)
     );
   });
 
-  const toiletBowlsWon = calculateToiletBowls(games)[ownerName] ?? 0;
+const lastPlaces = calculateLastPlaceFinishes(games);
+const lastPlaceFinishes = lastPlaces[ownerName] ?? 0;
 
   const regularSeasonByYear = seasons.map(year => {
     const seasonGames = ownerGames.filter(
@@ -542,6 +545,7 @@ const playoffSeasons = Array.from(
   });
 
   const bestRegularSeason = [...regularSeasonByYear]
+    .filter(row => row.gamesPlayed > 0)
     .sort((a, b) => {
       if (b.winPct !== a.winPct) return b.winPct - a.winPct;
       if (b.wins !== a.wins) return b.wins - a.wins;
@@ -564,17 +568,17 @@ const playoffSeasons = Array.from(
     row => row.gamesPlayed > 0 && row.wins === 0 && row.ties === 0
   );
 
-  const ownerScores = ownerGames.flatMap(game => {
+  const ownerScores = ownerGames.map(game => {
     const isTeam1 = game.team1 === ownerName;
 
-    return [{
+    return {
       year: game.year,
       week: game.week,
       score: isTeam1 ? game.team1Score : game.team2Score,
       opponent: isTeam1 ? game.team2 : game.team1,
       opponentScore: isTeam1 ? game.team2Score : game.team1Score,
       gameType: game.gameType
-    }];
+    };
   });
 
   const highestScoringWeek = [...ownerScores]
@@ -672,66 +676,34 @@ const playoffSeasons = Array.from(
     seasonsPlayed: seasons.length,
     bestFinish,
 
-    postseasonAppearances: playoffGames.length,
+    postseasonAppearances: playoffSeasons.length,
     championshipAppearances: championshipGames.length,
 
     toiletBowlAppearances: toiletBowlGames.length,
-    toiletBowlsWon,
+lastPlaceFinishes,
 
     sweptByLeague: sweptByLeagueSeasons,
     sweptLeague: sweptLeagueSeasons,
 
-    bestRegularSeason,
-    worstRegularSeason,
+    bestRegularSeason: bestRegularSeason ?? {
+      year: null,
+      wins: 0,
+      losses: 0,
+      ties: 0
+    },
+
+    worstRegularSeason: worstRegularSeason ?? {
+      year: null,
+      wins: 0,
+      losses: 0,
+      ties: 0
+    },
 
     highestScoringWeek,
     lowestScoringWeek,
 
     longestWinningStreak: getLongestStreak("W"),
     longestLosingStreak: getLongestStreak("L")
-  };
-}
-
-export function getOwnerSeasonRecords(games, ownerName, gameType = "R") {
-  const ownerGames = getGamesForOwner(games, ownerName)
-    .filter(game => game.gameType === gameType);
-
-  const seasons = Array.from(
-    new Set(ownerGames.map(game => game.year))
-  ).sort((a, b) => b - a);
-
-  const seasonRecords = seasons.map(year => {
-    const seasonGames = ownerGames.filter(game => game.year === year);
-
-    const record = calculateOwnerRecords(seasonGames)
-      .find(row => row.owner === ownerName);
-
-    return {
-      year,
-      wins: record?.wins ?? 0,
-      losses: record?.losses ?? 0,
-      ties: record?.ties ?? 0,
-      winPct: record?.winPct ?? 0,
-      pointsFor: record?.pointsFor ?? 0,
-      pointsAgainst: record?.pointsAgainst ?? 0,
-      gamesPlayed: record?.gamesPlayed ?? 0
-    };
-  });
-
-  const total = calculateOwnerRecords(ownerGames)
-    .find(row => row.owner === ownerName);
-
-  return {
-    seasons: seasonRecords,
-    total: {
-      wins: total?.wins ?? 0,
-      losses: total?.losses ?? 0,
-      ties: total?.ties ?? 0,
-      winPct: total?.winPct ?? 0,
-      pointsFor: total?.pointsFor ?? 0,
-      pointsAgainst: total?.pointsAgainst ?? 0,
-      gamesPlayed: total?.gamesPlayed ?? 0
-    }
   };
 }
 
@@ -758,11 +730,11 @@ export function getHeadToHeadStats(games, ownerA, ownerB) {
     regular: { ownerAWins: 0, ownerBWins: 0, ties: 0, gamesPlayed: 0 },
     playoffs: { ownerAWins: 0, ownerBWins: 0, ties: 0, gamesPlayed: 0 },
     consolation: { ownerAWins: 0, ownerBWins: 0, ties: 0, gamesPlayed: 0 },
+    championshipMeetings: [],
     biggestOwnerAWin: null,
     biggestOwnerBWin: null,
     closestGame: null,
-    recentGames: [],
-    championshipMeetings: [],
+    recentGames: []
   };
 
   for (const game of matchups) {
@@ -780,6 +752,7 @@ export function getHeadToHeadStats(games, ownerA, ownerB) {
       year: game.year,
       week: game.week,
       gameType: game.gameType,
+      finalSeeding: game.finalSeeding,
       ownerAScore,
       ownerBScore,
       margin,
@@ -790,9 +763,11 @@ export function getHeadToHeadStats(games, ownerA, ownerB) {
             ? ownerB
             : "Tie"
     };
-      if (game.gameType === "P" && game.finalSeeding === 1) {
-  stats.championshipMeetings.push(gameSummary);
+
+    if (game.gameType === "P" && game.finalSeeding === 1) {
+      stats.championshipMeetings.push(gameSummary);
     }
+
     if (ownerAScore > ownerBScore) {
       stats.ownerAWins++;
 
@@ -812,15 +787,7 @@ export function getHeadToHeadStats(games, ownerA, ownerB) {
     if (!stats.closestGame || margin < stats.closestGame.margin) {
       stats.closestGame = gameSummary;
     }
-stats.ownerAChampionshipWins =
-  stats.championshipMeetings.filter(
-    game => game.winner === ownerA
-  ).length;
 
-stats.ownerBChampionshipWins =
-  stats.championshipMeetings.filter(
-    game => game.winner === ownerB
-  ).length;
     const bucket =
       game.gameType === "R"
         ? stats.regular
@@ -851,6 +818,12 @@ stats.ownerBChampionshipWins =
   stats.ownerBAverage =
     stats.gamesPlayed > 0 ? stats.ownerBPoints / stats.gamesPlayed : 0;
 
+  stats.ownerAChampionshipWins =
+    stats.championshipMeetings.filter(game => game.winner === ownerA).length;
+
+  stats.ownerBChampionshipWins =
+    stats.championshipMeetings.filter(game => game.winner === ownerB).length;
+
   stats.recentGames = stats.recentGames.slice(0, 15);
 
   return stats;
@@ -858,12 +831,17 @@ stats.ownerBChampionshipWins =
 
 export function getHallOfFameStats(games) {
   const allRecords = calculateOwnerRecords(games);
+
   const regularRecords = calculateOwnerRecords(
     games.filter(game => game.gameType === "R")
   );
 
+  const playoffRecords = calculateOwnerRecords(
+    games.filter(game => game.gameType === "P")
+  );
+
   const championships = calculateChampionships(games);
-  const toiletBowls = calculateToiletBowls(games);
+const lastPlaces = calculateLastPlaceFinishes(games);
 
   const championshipLeaders = allRecords
     .map(owner => ({
@@ -871,8 +849,7 @@ export function getHallOfFameStats(games) {
       value: championships[owner.owner]?.championships ?? 0
     }))
     .filter(row => row.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
+    .sort((a, b) => b.value - a.value);
 
   const runnerUpLeaders = allRecords
     .map(owner => ({
@@ -880,17 +857,15 @@ export function getHallOfFameStats(games) {
       value: championships[owner.owner]?.runnerUps ?? 0
     }))
     .filter(row => row.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
+    .sort((a, b) => b.value - a.value);
 
-  const toiletBowlLeaders = allRecords
-    .map(owner => ({
-      owner: owner.owner,
-      value: toiletBowls[owner.owner] ?? 0
-    }))
-    .filter(row => row.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
+const lastPlaceLeaders = allRecords
+  .map(owner => ({
+    owner: owner.owner,
+    value: lastPlaces[owner.owner] ?? 0
+  }))
+  .filter(row => row.value > 0)
+  .sort((a, b) => b.value - a.value);
 
   const winPctLeaders = regularRecords
     .filter(owner => owner.gamesPlayed >= 50)
@@ -899,70 +874,217 @@ export function getHallOfFameStats(games) {
       value: owner.winPct,
       gamesPlayed: owner.gamesPlayed
     }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
+    .sort((a, b) => b.value - a.value);
 
   const pointsForLeaders = regularRecords
     .map(owner => ({
       owner: owner.owner,
       value: owner.pointsFor
     }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
+    .sort((a, b) => b.value - a.value);
 
   const winsLeaders = regularRecords
     .map(owner => ({
       owner: owner.owner,
       value: owner.wins
     }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
-
-  const playoffRecords = calculateOwnerRecords(
-    games.filter(game => game.gameType === "P")
-  );
+    .sort((a, b) => b.value - a.value);
 
   const playoffWinsLeaders = playoffRecords
     .map(owner => ({
       owner: owner.owner,
       value: owner.wins
     }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
-const bestSingleSeasons = [];
+    .sort((a, b) => b.value - a.value);
 
-for (const owner of regularRecords) {
-  const ownerSeasonRecords = getOwnerSeasonRecords(games, owner.owner, "R");
+  const bestSingleSeasons = [];
 
-  for (const season of ownerSeasonRecords.seasons) {
-    bestSingleSeasons.push({
-      owner: owner.owner,
-      year: season.year,
-      wins: season.wins,
-      losses: season.losses,
-      ties: season.ties,
-      winPct: season.winPct,
-      pointsFor: season.pointsFor,
-      pointsAgainst: season.pointsAgainst,
-      gamesPlayed: season.gamesPlayed
-    });
+  for (const owner of regularRecords) {
+    const ownerSeasonRecords = getOwnerSeasonRecords(games, owner.owner, "R");
+
+    for (const season of ownerSeasonRecords.seasons) {
+      bestSingleSeasons.push({
+        owner: owner.owner,
+        year: season.year,
+        wins: season.wins,
+        losses: season.losses,
+        ties: season.ties,
+        winPct: season.winPct,
+        pointsFor: season.pointsFor,
+        pointsAgainst: season.pointsAgainst,
+        gamesPlayed: season.gamesPlayed
+      });
+    }
   }
-}
 
-bestSingleSeasons.sort((a, b) => {
-  if (b.winPct !== a.winPct) return b.winPct - a.winPct;
-  if (b.wins !== a.wins) return b.wins - a.wins;
-  return b.pointsFor - a.pointsFor;
-});
+  bestSingleSeasons.sort((a, b) => {
+    if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    return b.pointsFor - a.pointsFor;
+  });
 
   return {
     championshipLeaders,
     runnerUpLeaders,
-    toiletBowlLeaders,
     winPctLeaders,
     pointsForLeaders,
     winsLeaders,
     playoffWinsLeaders,
-    bestSingleSeasons: bestSingleSeasons.slice(0, 3),
+    lastPlaceLeaders,
+    bestSingleSeasons: bestSingleSeasons.slice(0, 3)
   };
 }
+
+export function getSurvivorResults(games) {
+  const seasons = getSeasonList(games);
+  const results = [];
+
+  for (const year of seasons) {
+    const seasonGames = getGamesForSeason(games, year)
+      .filter(game => game.gameType === "R");
+
+    const weeklyScores = {};
+
+    for (const game of seasonGames) {
+      if (!weeklyScores[game.week]) {
+        weeklyScores[game.week] = [];
+      }
+
+      weeklyScores[game.week].push({
+        owner: game.team1,
+        score: game.team1Score,
+        opponent: game.team2
+      });
+
+      weeklyScores[game.week].push({
+        owner: game.team2,
+        score: game.team2Score,
+        opponent: game.team1
+      });
+    }
+
+    const allOwners = Array.from(
+      new Set(seasonGames.flatMap(game => [game.team1, game.team2]))
+    );
+
+    const alive = new Set(allOwners);
+    const eliminations = [];
+
+    const weeks = Object.keys(weeklyScores)
+      .map(Number)
+      .sort((a, b) => a - b);
+
+    for (const week of weeks) {
+      if (alive.size <= 1) break;
+
+      const aliveScores = weeklyScores[week]
+        .filter(row => alive.has(row.owner))
+        .sort((a, b) => a.score - b.score);
+
+      if (aliveScores.length === 0) continue;
+
+      const lowestScore = aliveScores[0].score;
+
+      const eliminatedOwners = aliveScores.filter(
+        row => row.score === lowestScore
+      );
+
+      for (const eliminated of eliminatedOwners) {
+        alive.delete(eliminated.owner);
+
+        eliminations.push({
+          week,
+          owner: eliminated.owner,
+          score: eliminated.score,
+          opponent: eliminated.opponent,
+          remainingAfterElimination: alive.size
+        });
+      }
+    }
+
+    const remainingTeams = Array.from(alive);
+
+    results.push({
+      year,
+      startingOwners: allOwners.length,
+      complete: remainingTeams.length <= 1,
+      survivor: remainingTeams.length === 1 ? remainingTeams[0] : null,
+      noSurvivor: remainingTeams.length === 0,
+      remainingTeams,
+      eliminations
+    });
+  }
+
+  return results;
+}
+
+export function getPowerRankings(games, owners = []) {
+  const allRecords = calculateOwnerRecords(games);
+  const regularRecords = calculateOwnerRecords(
+    games.filter(game => game.gameType === "R")
+  );
+  const playoffRecords = calculateOwnerRecords(
+    games.filter(game => game.gameType === "P")
+  );
+
+const championships = calculateChampionships(games);
+const lastPlaces = calculateLastPlaceFinishes(games);
+
+  const activeOwners = new Set(
+    owners
+      .filter(owner => owner.status === "ACTIVE")
+      .map(owner => owner.owner)
+  );
+
+  const ownerNames = Array.from(
+    new Set(games.flatMap(game => [game.team1, game.team2]))
+  ).sort();
+
+  const rankings = ownerNames.map(ownerName => {
+    const all = allRecords.find(row => row.owner === ownerName);
+    const regular = regularRecords.find(row => row.owner === ownerName);
+    const playoffs = playoffRecords.find(row => row.owner === ownerName);
+
+    const titles = championships[ownerName]?.championships ?? 0;
+    const runnerUps = championships[ownerName]?.runnerUps ?? 0;
+    const lastPlaceFinishes = lastPlaces[ownerName] ?? 0;
+
+    const regularWins = regular?.wins ?? 0;
+    const playoffWins = playoffs?.wins ?? 0;
+    const winPct = regular?.winPct ?? 0;
+    const gamesPlayed = regular?.gamesPlayed ?? 0;
+    const pointsPerGame =
+      gamesPlayed > 0 ? (regular?.pointsFor ?? 0) / gamesPlayed : 0;
+
+    const score =
+      titles * 25 +
+      runnerUps * 10 +
+      regularWins * 2 +
+      playoffWins * 4 +
+      winPct * 100 +
+      pointsPerGame * 0.25 -
+      - lastPlaceFinishes * 15;
+
+    return {
+      owner: ownerName,
+      active: activeOwners.has(ownerName),
+      score,
+      championships: titles,
+      runnerUps,
+      lastPlaceFinishes,
+      regularWins,
+      playoffWins,
+      winPct,
+      gamesPlayed,
+      pointsPerGame
+    };
+  });
+
+  return rankings
+    .sort((a, b) => b.score - a.score)
+    .map((row, index) => ({
+      ...row,
+      rank: index + 1
+    }));
+}
+

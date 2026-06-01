@@ -1,0 +1,131 @@
+---
+import { getGameLog, getOwners } from "../lib/data";
+import { getPowerRankings, slugifyOwner } from "../lib/stats";
+import "../styles/style.css";
+import Nav from "../components/Nav.astro";
+
+const gameLog = getGameLog();
+const owners = getOwners();
+
+const rankings = getPowerRankings(gameLog, owners);
+---
+
+<html>
+  <body>
+    <Nav />
+
+    <h1>&#128200; Power Rankings</h1>
+
+    <p>
+      Composite ranking based on championships, runner-ups, regular season wins,
+      playoff wins, win percentage, scoring, and toilet bowls.
+    </p>
+
+    <label for="ranking-filter">Show:</label>
+
+    <select id="ranking-filter">
+      <option value="all">All-Time Teams</option>
+      <option value="active">Current Teams</option>
+    </select>
+
+    <table id="power-rankings-table">
+      <tr>
+        <th>Rank</th>
+        <th>Owner</th>
+        <th>Score</th>
+        <th title="Championships">&#127942;</th>
+        <th title="Runner-Up">&#129352;</th>
+        <th title="Last-Place Finishes">&#128128;</th>
+        <th>Reg W</th>
+        <th>PO W</th>
+        <th>Win %</th>
+        <th>PPG</th>
+      </tr>
+
+      {
+        rankings.map(row => (
+          <tr data-active={row.active ? "true" : "false"}>
+            <td class="rank-cell">{row.rank}</td>
+            <td>
+              <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                {row.owner}
+              </a>
+            </td>
+            <td>{row.score.toFixed(1)}</td>
+            <td>{row.championships}</td>
+            <td>{row.runnerUps}</td>
+            <td>{row.lastPlaceFinishes}</td>
+            <td>{row.regularWins}</td>
+            <td>{row.playoffWins}</td>
+            <td>{row.winPct.toFixed(3)}</td>
+            <td>{row.pointsPerGame.toFixed(1)}</td>
+          </tr>
+        ))
+      }
+    </table>
+
+    <h2>Formula</h2>
+
+    <table>
+      <tr>
+        <th>Metric</th>
+        <th>Weight</th>
+      </tr>
+      <tr>
+        <td>Championship</td>
+        <td>+25</td>
+      </tr>
+      <tr>
+        <td>Runner-Up</td>
+        <td>+10</td>
+      </tr>
+      <tr>
+        <td>Regular Season Win</td>
+        <td>+2</td>
+      </tr>
+      <tr>
+        <td>Playoff Win</td>
+        <td>+4</td>
+      </tr>
+      <tr>
+        <td>Regular Season Win %</td>
+        <td>Win % &times; 100</td>
+      </tr>
+      <tr>
+        <td>Points Per Game</td>
+        <td>PPG &times; 0.25</td>
+      </tr>
+      <tr>
+        <td>Last-Place Finish</td>
+        <td>-15</td>
+      </tr>
+    </table>
+
+    <script>
+      const filter = document.getElementById("ranking-filter");
+      const table = document.getElementById("power-rankings-table");
+
+      function applyFilter() {
+        const rows = Array.from(table.querySelectorAll("tr[data-active]"));
+        const value = filter.value;
+
+        let visibleRank = 1;
+
+        rows.forEach(row => {
+          const isActive = row.dataset.active === "true";
+          const shouldShow = value === "all" || isActive;
+
+          row.style.display = shouldShow ? "" : "none";
+
+          if (shouldShow) {
+            row.querySelector(".rank-cell").textContent = visibleRank;
+            visibleRank++;
+          }
+        });
+      }
+
+      filter.addEventListener("change", applyFilter);
+      applyFilter();
+    </script>
+  </body>
+</html>

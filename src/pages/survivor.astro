@@ -1,0 +1,66 @@
+---
+import { getGameLog } from "../lib/data";
+import { getSurvivorResults, slugifyOwner } from "../lib/stats";
+import "../styles/style.css";
+import Nav from "../components/Nav.astro";
+
+const gameLog = getGameLog();
+const survivorResults = getSurvivorResults(gameLog);
+---
+
+<html>
+  <body>
+    <Nav />
+
+    <h1>&#128170; Survivor Series</h1>
+
+    {
+      survivorResults.map(season => (
+        <section>
+          <h2>{season.year}</h2>
+
+          <p>
+            Survivor:{" "}
+            <strong>
+              {
+                season.survivor ? (
+                  <a href={`/owners/${slugifyOwner(season.survivor)}`}>
+                    {season.survivor}
+                  </a>
+                ) : (
+                  "N/A"
+                )
+              }
+            </strong>
+          </p>
+
+          <p>Starting Teams: {season.startingOwners}</p>
+
+          <table>
+            <tr>
+              <th>Week</th>
+              <th>Eliminated</th>
+              <th>Score</th>
+              <th>Remaining</th>
+            </tr>
+
+            {
+              season.eliminations.map(row => (
+                <tr>
+                  <td>{row.week}</td>
+                  <td>
+                    <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                      {row.owner}
+                    </a>
+                  </td>
+                  <td>{row.score.toFixed(2)}</td>
+                  <td>{row.remainingAfterElimination}</td>
+                </tr>
+              ))
+            }
+          </table>
+        </section>
+      ))
+    }
+  </body>
+</html>
