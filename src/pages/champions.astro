@@ -1,8 +1,8 @@
 ---
-import "../styles/style.css";
-import Nav from "../components/Nav.astro";
 import { getGameLog } from "../lib/data";
 import { getChampionshipGames, slugifyOwner } from "../lib/stats";
+import "../styles/style.css";
+import Nav from "../components/Nav.astro";
 
 const gameLog = getGameLog();
 const championshipGames = getChampionshipGames(gameLog);
@@ -11,7 +11,8 @@ const championshipGames = getChampionshipGames(gameLog);
 <html>
   <body>
     <Nav />
-    <h1>Championship History &#127942;</h1>
+
+    <h1>&#127942; Championship History</h1>
 
     <table>
       <tr>
@@ -26,23 +27,56 @@ const championshipGames = getChampionshipGames(gameLog);
         championshipGames.map(game => (
           <tr>
             <td>{game.year}</td>
+
             <td>
-              <a href={`/owners/${slugifyOwner(game.champion)}`}>
-                {game.champion}
-              </a>
+              {
+                game.isSharedChampionship
+                  ? game.champion.split(" / ").map((owner, index, arr) => (
+                      <>
+                        <a href={`/owners/${slugifyOwner(owner)}`}>
+                          {owner}
+                        </a>
+                        {index < arr.length - 1 ? " / " : ""}
+                      </>
+                    ))
+                  : (
+                    <a href={`/owners/${slugifyOwner(game.champion)}`}>
+                      {game.champion}
+                    </a>
+                  )
+              }
             </td>
+
             <td>
-              <a href={`/owners/${slugifyOwner(game.runnerUp)}`}>
-                {game.runnerUp}
-              </a>
+              {
+                game.runnerUp === "N/A"
+                  ? "N/A"
+                  : (
+                    <a href={`/owners/${slugifyOwner(game.runnerUp)}`}>
+                      {game.runnerUp}
+                    </a>
+                  )
+              }
             </td>
+
             <td>
               {game.championScore.toFixed(2)} - {game.runnerUpScore.toFixed(2)}
             </td>
-            <td>{game.margin.toFixed(2)}</td>
+
+            <td>
+              {game.margin.toFixed(2)}
+            </td>
           </tr>
         ))
       }
     </table>
+
+    <p>
+      <strong>* 2022 Note:</strong> The championship was declared a shared title
+      following the cancellation of the Buffalo Bills vs Cincinnati Bengals game
+      after the Damar Hamlin incident. Both finalists are credited with a league
+      championship.
+    </p>
+
   </body>
 </html>

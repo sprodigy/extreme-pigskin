@@ -87,3 +87,9 @@ select {
 .hof-card h3 {
   margin-top: 0;
 }
+
+.chart-card {
+  max-width: 700px;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}

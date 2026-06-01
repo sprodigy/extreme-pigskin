@@ -1,0 +1,52 @@
+---
+const { chartId, labels, points } = Astro.props;
+---
+
+<div class="chart-card">
+  <h2>Regular Season Points by Year</h2>
+
+  <canvas
+    id={chartId}
+    data-chart="owner-points"
+    data-labels={JSON.stringify(labels)}
+    data-points={JSON.stringify(points)}
+  ></canvas>
+</div>
+
+<script>
+  import Chart from "chart.js/auto";
+
+  const canvases = document.querySelectorAll("canvas[data-chart='owner-points']");
+
+  canvases.forEach(canvas => {
+    const labels = JSON.parse(canvas.dataset.labels);
+    const points = JSON.parse(canvas.dataset.points);
+
+    new Chart(canvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Points For",
+            data: points,
+            tension: 0.25
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false
+          }
+        }
+      }
+    });
+  });
+</script>

@@ -1,3 +1,5 @@
+import { championshipOverrides } from "./leagueOverrides";
+
 export function calculateOwnerRecords(games) {
   const owners = {};
 
@@ -137,29 +139,46 @@ export function getPlayoffGamesForSeason(games, year) {
 export function calculateChampionships(games) {
   const championships = {};
 
+  function ensureOwner(owner) {
+    if (!championships[owner]) {
+      championships[owner] = {
+        championships: 0,
+        runnerUps: 0
+      };
+    }
+  }
+
+  const sharedTitleYears = new Set(
+    championshipOverrides
+      .filter(override => override.type === "shared_championship")
+      .map(override => override.year)
+  );
+
   for (const game of games) {
-    if (game.gameType === "P" && game.finalSeeding === 1) {
-      const team1Won = game.team1Score > game.team2Score;
+    if (game.gameType !== "P" || game.finalSeeding !== 1) continue;
 
-      const winner = team1Won ? game.team1 : game.team2;
-      const runnerUp = team1Won ? game.team2 : game.team1;
+    if (sharedTitleYears.has(game.year)) {
+      continue;
+    }
 
-      if (!championships[winner]) {
-        championships[winner] = {
-          championships: 0,
-          runnerUps: 0
-        };
-      }
+    const team1Won = game.team1Score > game.team2Score;
 
-      if (!championships[runnerUp]) {
-        championships[runnerUp] = {
-          championships: 0,
-          runnerUps: 0
-        };
-      }
+    const winner = team1Won ? game.team1 : game.team2;
+    const runnerUp = team1Won ? game.team2 : game.team1;
 
-      championships[winner].championships++;
-      championships[runnerUp].runnerUps++;
+    ensureOwner(winner);
+    ensureOwner(runnerUp);
+
+    championships[winner].championships++;
+    championships[runnerUp].runnerUps++;
+  }
+
+  for (const override of championshipOverrides) {
+    if (override.type !== "shared_championship") continue;
+
+    for (const owner of override.owners) {
+      ensureOwner(owner);
+      championships[owner].championships++;
     }
   }
 
@@ -170,16 +189,43 @@ export function getChampionshipGames(games) {
   return games
     .filter(game => game.gameType === "P" && game.finalSeeding === 1)
     .map(game => {
+      const override = championshipOverrides.find(
+        item =>
+          item.type === "shared_championship" &&
+          item.year === game.year
+      );
+
       const team1Won = game.team1Score > game.team2Score;
+
+      const normalChampion = team1Won ? game.team1 : game.team2;
+      const normalRunnerUp = team1Won ? game.team2 : game.team1;
+      const championScore = team1Won ? game.team1Score : game.team2Score;
+      const runnerUpScore = team1Won ? game.team2Score : game.team1Score;
+
+      if (override) {
+        return {
+          year: game.year,
+          week: game.week,
+          champion: override.owners.join(" / "),
+          runnerUp: "N/A",
+          championScore,
+          runnerUpScore,
+          margin: Math.abs(game.team1Score - game.team2Score),
+          isSharedChampionship: true,
+          note: override.note
+        };
+      }
 
       return {
         year: game.year,
         week: game.week,
-        champion: team1Won ? game.team1 : game.team2,
-        runnerUp: team1Won ? game.team2 : game.team1,
-        championScore: team1Won ? game.team1Score : game.team2Score,
-        runnerUpScore: team1Won ? game.team2Score : game.team1Score,
-        margin: Math.abs(game.team1Score - game.team2Score)
+        champion: normalChampion,
+        runnerUp: normalRunnerUp,
+        championScore,
+        runnerUpScore,
+        margin: Math.abs(game.team1Score - game.team2Score),
+        isSharedChampionship: false,
+        note: null
       };
     })
     .sort((a, b) => b.year - a.year);
@@ -191,12 +237,21 @@ export function getOwnerChampionshipResults(games, ownerName) {
     runnerUpSeasons: []
   };
 
+  const sharedTitleYears = new Set(
+    championshipOverrides
+      .filter(override => override.type === "shared_championship")
+      .map(override => override.year)
+  );
+
   for (const game of games) {
-    if (game.gameType !== "P" || game.finalSeeding !== 1) {
+    if (game.gameType !== "P" || game.finalSeeding !== 1) continue;
+
+    if (sharedTitleYears.has(game.year)) {
       continue;
     }
 
     const team1Won = game.team1Score > game.team2Score;
+
     const champion = team1Won ? game.team1 : game.team2;
     const runnerUp = team1Won ? game.team2 : game.team1;
 
@@ -206,6 +261,14 @@ export function getOwnerChampionshipResults(games, ownerName) {
 
     if (runnerUp === ownerName) {
       results.runnerUpSeasons.push(game.year);
+    }
+  }
+
+  for (const override of championshipOverrides) {
+    if (override.type !== "shared_championship") continue;
+
+    if (override.owners.includes(ownerName)) {
+      results.championshipSeasons.push(override.year);
     }
   }
 

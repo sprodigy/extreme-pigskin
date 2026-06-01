@@ -1,6 +1,7 @@
 ---
 import "../../styles/style.css";
 import Nav from "../../components/Nav.astro";
+import OwnerPointsChart from "../../components/OwnerPointsChart.astro";
 import { getGameLog } from "../../lib/data";
 import {
   getOwnerList,
@@ -33,7 +34,15 @@ const regularSeasonRecords =
   getOwnerSeasonRecords(gameLog, ownerName, "R");
 const playoffRecords =
   getOwnerSeasonRecords(gameLog, ownerName, "P");
+const regularSeasonChartData = [...regularSeasonRecords.seasons]
+  .sort((a, b) => a.year - b.year)
+  .map(season => ({
+    year: season.year,
+    pointsFor: Math.round(season.pointsFor)
+  }));
 
+const chartLabels = regularSeasonChartData.map(row => row.year);
+const chartPoints = regularSeasonChartData.map(row => row.pointsFor);
 const record = getOwnerRecord(gameLog, ownerName);
 const games = getGamesForOwner(gameLog, ownerName);
 const quickFacts = getOwnerQuickFacts(gameLog, ownerName);
@@ -192,6 +201,13 @@ const sortedGames = [...games].sort((a, b) => {
         ))
       }
     </table>
+
+    <OwnerPointsChart
+  chartId={`owner-points-${ownerName.replaceAll(" ", "-").toLowerCase()}`}
+  labels={chartLabels}
+  points={chartPoints}
+/>
+
 <h2>Regular Season Record by Year</h2>
 
 <table>
