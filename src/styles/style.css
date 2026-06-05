@@ -2,8 +2,14 @@ body {
   background-color: #1e1e1e;
   color: #d4d4d4;
   font-family: Arial, Helvetica, sans-serif;
-  margin: 1rem;
+  margin: 0;
+  padding: 1rem;
   line-height: 1.4;
+}
+
+main {
+  width: 100%;
+  max-width: none;
 }
 
 h1 {
@@ -27,6 +33,7 @@ a:hover {
 }
 
 table {
+  width: 100%;
   border-collapse: collapse;
   margin-top: 0.5rem;
   margin-bottom: 1rem;
@@ -36,7 +43,7 @@ table {
 th,
 td {
   border: 1px solid #3c3c3c;
-  padding: 0.2rem 0.4rem;
+  padding: 0.3rem 0.5rem;
   white-space: nowrap;
 }
 
@@ -52,14 +59,24 @@ tr:nth-child(even) {
 tr:hover {
   background-color: #37373d;
 }
+
 .total-row {
   font-weight: bold;
-  background: #eaeaea;
+  background: #333333;
+  color: #ffffff;
 }
 
 select {
   margin-top: 0.25rem;
   margin-bottom: 0.75rem;
+  background: #252526;
+  color: #d4d4d4;
+  border: 1px solid #3c3c3c;
+  padding: 0.25rem;
+}
+
+option {
+  background: #252526;
 }
 
 .site-nav {
@@ -103,22 +120,33 @@ select {
 }
 
 .chart-card {
-  max-width: 700px;
+  width: 100%;
+  max-width: 1000px;
   margin-top: 1rem;
   margin-bottom: 1.5rem;
 }
 
-select {
-  background: #252526;
-  color: #d4d4d4;
-  border: 1px solid #3c3c3c;
-  padding: 0.25rem;
-}
-
-option {
-  background: #252526;
-}
-
 .champion {
   color: #d7ba7d;
+}
+
+/* Responsive table scrolling */
+
+.table-wrap,
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Improve readability on large screens */
+
+@media (min-width: 1400px) {
+  body {
+    font-size: 16px;
+  }
+
+  th,
+  td {
+    padding: 0.4rem 0.7rem;
+  }
 }
