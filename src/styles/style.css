@@ -165,25 +165,26 @@ option {
 
 @media (max-width: 700px) {
   body {
-    padding: 0.5rem;
-    font-size: 18px;
+    padding: 0.4rem;
+    font-size: 16px;
   }
 
-  h1 {
-    font-size: 1.35rem;
+  table {
+    font-size: 0.78rem;
   }
 
   th,
   td {
-    padding: 0.16rem 0.28rem;
+    padding: 0.12rem 0.22rem;
   }
 
   .site-nav {
-    gap: 0.3rem;
+    flex-wrap: wrap;
   }
 
   .site-nav a {
-    font-size: 0.75rem;
+    white-space: normal;
+    font-size: 0.8rem;
     padding: 0.3rem 0.45rem;
   }
 }
