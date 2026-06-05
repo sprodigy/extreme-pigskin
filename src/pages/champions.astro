@@ -1,17 +1,14 @@
 ---
 import { getGameLog } from "../lib/data";
 import { getChampionshipGames, slugifyOwner } from "../lib/stats";
-import "../styles/style.css";
-import Nav from "../components/Nav.astro";
+import Layout from "../layouts/layout.astro";
 
 const gameLog = getGameLog();
 const championshipGames = getChampionshipGames(gameLog);
 ---
-
+<Layout title="Champions">
 <html>
   <body>
-    <Nav />
-
     <h1 class="champion">&#127942; Championship History</h1>
 
     <table>
@@ -80,3 +77,4 @@ const championshipGames = getChampionshipGames(gameLog);
 
   </body>
 </html>
+</Layout>
