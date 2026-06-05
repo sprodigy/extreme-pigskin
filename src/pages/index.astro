@@ -6,8 +6,7 @@ import {
   calculateToiletBowls,
   slugifyOwner
 } from "../lib/stats";
-import "../styles/style.css";
-import Nav from "../components/Nav.astro";
+import Layout from "../layouts/Layout.astro";
 
 const gameLog = getGameLog();
 const owners = getOwners();
@@ -69,10 +68,9 @@ function emptyRecord(ownerName) {
   };
 }
 ---
-
+<Layout title="Extreme Pigskin">
 <html>
   <body>
-    <Nav />
 
     <h1>Fantasy League History</h1>
 
@@ -324,3 +322,4 @@ function updateDisplayedStats() {
     </script>
   </body>
 </html>
+</Layout>

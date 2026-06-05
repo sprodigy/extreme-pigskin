@@ -1,0 +1,22 @@
+---
+import "../styles/style.css";
+import Nav from "../components/Nav.astro";
+
+const { title = "Extreme Pigskin" } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extreme Pigskin</title>
+  </head>
+
+  <body>
+    <Nav />
+
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>
