@@ -1,3 +1,12 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
 body {
   background-color: #1e1e1e;
   color: #d4d4d4;
@@ -20,7 +29,7 @@ h1 {
   color: #ffffff;
   border-bottom: 2px solid #3c3c3c;
   padding-bottom: 0.25rem;
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-size: clamp(1.3rem, 4.5vw, 2rem);
   line-height: 1.15;
   max-width: 100%;
   overflow-wrap: break-word;
