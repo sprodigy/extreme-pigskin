@@ -1,6 +1,6 @@
 ---
 import { getGameLog } from "../lib/data";
-import { getChampionshipGames, slugifyOwner } from "../lib/stats";
+import { getChampionshipGames, shortOwnerName, slugifyOwner } from "../lib/stats";
 import Layout from "../layouts/layout.astro";
 
 const gameLog = getGameLog();
@@ -10,7 +10,7 @@ const championshipGames = getChampionshipGames(gameLog);
 <html>
   <body>
     <h1 class="champion">&#127942; Championship History</h1>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Year</th>
@@ -31,14 +31,14 @@ const championshipGames = getChampionshipGames(gameLog);
                   ? game.champion.split(" / ").map((owner, index, arr) => (
                       <>
                         <a href={`/owners/${slugifyOwner(owner)}`}>
-                          {owner}
+                          {shortOwnerName(owner)}
                         </a>
                         {index < arr.length - 1 ? " / " : ""}
                       </>
                     ))
                   : (
                     <a href={`/owners/${slugifyOwner(game.champion)}`}>
-                      {game.champion}
+                      {shortOwnerName(game.champion)}
                     </a>
                   )
               }
@@ -50,7 +50,7 @@ const championshipGames = getChampionshipGames(gameLog);
                   ? "N/A"
                   : (
                     <a href={`/owners/${slugifyOwner(game.runnerUp)}`}>
-                      {game.runnerUp}
+                      {shortOwnerName(game.runnerUp)}
                     </a>
                   )
               }
@@ -67,6 +67,7 @@ const championshipGames = getChampionshipGames(gameLog);
         ))
       }
     </table>
+    </div>
 
     <p>
       <strong>* 2022 Note:</strong> The championship was declared a shared title

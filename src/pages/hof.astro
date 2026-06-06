@@ -1,8 +1,7 @@
 ---
 import { getGameLog } from "../lib/data";
 import { getHallOfFameStats, slugifyOwner } from "../lib/stats";
-import "../styles/style.css";
-import Nav from "../components/Nav.astro";
+import Layout from "../layouts/layout.astro";
 
 const gameLog = getGameLog();
 const hof = getHallOfFameStats(gameLog);
@@ -13,15 +12,14 @@ function formatValue(value, type = "number") {
   return value;
 }
 ---
-
+<Layout title="HOF">
 <html>
   <body>
-    <Nav />
 
     <h1>&#127941; Hall of Fame</h1>
 
     <h2>&#127942; Most Championships</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Rank</th>
@@ -45,9 +43,9 @@ function formatValue(value, type = "number") {
         ))
       }
     </table>
-
+</div>
     <h2>&#129352; Most Runner-Ups</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Rank</th>
@@ -71,6 +69,7 @@ function formatValue(value, type = "number") {
         ))
       }
     </table>
+</div>
 <h2>&#128293; Best Single Season</h2>
 
 <div class="hof-card-grid">
@@ -106,7 +105,7 @@ function formatValue(value, type = "number") {
   }
 </div>
     <h2>&#128200; Highest Regular Season Win %</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Rank</th>
@@ -132,9 +131,9 @@ function formatValue(value, type = "number") {
         ))
       }
     </table>
-
+</div>
     <h2>&#127919; Most Regular Season Points</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Rank</th>
@@ -158,9 +157,9 @@ function formatValue(value, type = "number") {
         ))
       }
     </table>
-
+</div>
     <h2>&#127944; Most Regular Season Wins</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Rank</th>
@@ -184,9 +183,9 @@ function formatValue(value, type = "number") {
         ))
       }
     </table>
-
+</div>
     <h2>&#127942; Most Playoff Wins</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Rank</th>
@@ -210,9 +209,9 @@ function formatValue(value, type = "number") {
         ))
       }
     </table>
-
+</div>
     <h2>&#128128; Most Last-Place Finishes</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Rank</th>
@@ -236,5 +235,7 @@ function formatValue(value, type = "number") {
         ))
       }
     </table>
+    </div>
   </body>
 </html>
+</Layout>

@@ -1,16 +1,14 @@
 ---
-import "../../styles/style.css";
-import Nav from "../../components/Nav.astro";
+import Layout from "../../layouts/layout.astro";
 import { getGameLog } from "../../lib/data";
 import { getSeasonList } from "../../lib/stats";
 
 const gameLog = getGameLog();
 const seasons = getSeasonList(gameLog);
 ---
-
+<Layout title="Seasons">
 <html>
   <body>
-    <Nav />
     <h1>Season Explorer &#128197;</h1>
 
     <p>Select a season:</p>
@@ -37,3 +35,4 @@ const seasons = getSeasonList(gameLog);
     </script>
   </body>
 </html>
+</Layout>

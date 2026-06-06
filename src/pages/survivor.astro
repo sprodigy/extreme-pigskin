@@ -1,17 +1,14 @@
 ---
 import { getGameLog } from "../lib/data";
 import { getSurvivorResults, slugifyOwner } from "../lib/stats";
-import "../styles/style.css";
-import Nav from "../components/Nav.astro";
+import Layout from "../layouts/layout.astro";
 
 const gameLog = getGameLog();
 const survivorResults = getSurvivorResults(gameLog);
 ---
-
+<Layout title="Survivor">
 <html>
   <body>
-    <Nav />
-
     <h1>&#128170; Survivor Series</h1>
 
     {
@@ -64,3 +61,4 @@ const survivorResults = getSurvivorResults(gameLog);
     }
   </body>
 </html>
+</Layout>

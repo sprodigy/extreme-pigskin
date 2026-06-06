@@ -1,6 +1,5 @@
 ---
-import "../../styles/style.css";
-import Nav from "../../components/Nav.astro";
+import Layout from "../../layouts/layout.astro";
 import OwnerPointsChart from "../../components/OwnerPointsChart.astro";
 import { getGameLog } from "../../lib/data";
 import {
@@ -68,10 +67,9 @@ const sortedGames = [...games].sort((a, b) => {
   
 });
 ---
-
+<Layout title="Owner Deep Dive">
 <html>
   <body>
-    <Nav />
     <h1>{ownerName} &#128100;</h1>
 
     <h2>Quick Facts</h2>
@@ -180,7 +178,7 @@ const sortedGames = [...games].sort((a, b) => {
     <p>Points Against: {record.pointsAgainst.toFixed(2)}</p>
 
     <h2>Rivalries</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Opponent</th>
@@ -201,7 +199,7 @@ const sortedGames = [...games].sort((a, b) => {
         ))
       }
     </table>
-
+</div>
     <OwnerPointsChart
   chartId={`owner-points-${ownerName.replaceAll(" ", "-").toLowerCase()}`}
   labels={chartLabels}
@@ -209,7 +207,7 @@ const sortedGames = [...games].sort((a, b) => {
 />
 
 <h2>Regular Season Record by Year</h2>
-
+<div class="table-wrap">
 <table>
   <tr>
     <th>Year</th>
@@ -248,9 +246,11 @@ const sortedGames = [...games].sort((a, b) => {
   <td>{regularSeasonRecords.total.gamesPlayed}</td>
 </tr>
 </table>
+</div>
 
 <h2>Playoff Record by Year</h2>
 
+<div class="table-wrap">
 <table>
   <tr>
     <th>Year</th>
@@ -328,6 +328,7 @@ const sortedGames = [...games].sort((a, b) => {
         })
       }
     </table>
-    
+    </div>
   </body>
 </html>
+</Layout>

@@ -1,8 +1,7 @@
 ---
 import { getGameLog } from "../../lib/data";
 import * as stats from "../../lib/stats";
-import "../../styles/style.css";
-import Nav from "../../components/Nav.astro";
+import Layout from "../../layouts/layout.astro";
 
 export function getStaticPaths() {
   const gameLog = getGameLog();
@@ -42,10 +41,9 @@ const topTeamsByWeek = stats.getTopTeamsByWeek(gameLog, year);
 
 const slugifyOwner = stats.slugifyOwner;
 ---
-
+<Layout title="Season Details">
 <html>
   <body>
-    <Nav />
     <h1>{year} Season</h1>
     <p>
   {
@@ -134,7 +132,7 @@ const slugifyOwner = stats.slugifyOwner;
       )
     }
 <h2>Top Team of the Week</h2>
-
+<div class="table-wrap">
 <table>
   <tr>
     <th>Week</th>
@@ -151,13 +149,13 @@ const slugifyOwner = stats.slugifyOwner;
         <td>{row.week}</td>
         <td>
           <a href={`/owners/${slugifyOwner(row.owner)}`}>
-            {row.owner}
+            {stats.shortOwnerName(row.owner)}
           </a>
         </td>
         <td>{row.score.toFixed(2)}</td>
         <td>
           <a href={`/owners/${slugifyOwner(row.opponent)}`}>
-            {row.opponent}
+            {stats.shortOwnerName(row.opponent)}
           </a>
         </td>
         <td>{row.opponentScore.toFixed(2)}</td>
@@ -166,8 +164,9 @@ const slugifyOwner = stats.slugifyOwner;
     ))
   }
 </table>
+</div>
     <h2>Regular Season Standings</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Rank</th>
@@ -187,7 +186,7 @@ const slugifyOwner = stats.slugifyOwner;
             <td>{index + 1}</td>
             <td>
               <a href={`/owners/${slugifyOwner(owner.owner)}`}>
-                {owner.owner}
+                {stats.shortOwnerName(owner.owner)}
               </a>
             </td>
             <td>{owner.wins}</td>
@@ -201,121 +200,104 @@ const slugifyOwner = stats.slugifyOwner;
         ))
       }
     </table>
+</div>
+<h2>Playoffs & Consolation</h2>
+<div class="table-wrap">
+<table>
+  <tr>
+    <th>Week</th>
+    <th>Type</th>
+    <th>Winner</th>
+    <th>Score</th>
+    <th>Loser</th>
+    <th>Score</th>
+  </tr>
 
-    <h2>Playoffs & Consolation</h2>
+  {
+    playoffGames.map(game => {
+      const team1Won = game.team1Score > game.team2Score;
 
-    <table>
-      <tr>
-        <th>Week</th>
-        <th>Type</th>
-        <th>Seeding</th>
-        <th>Team 1</th>
-        <th>Score</th>
-        <th>Team 2</th>
-        <th>Score</th>
-        <th>Winner</th>
-      </tr>
+      const winner = team1Won ? game.team1 : game.team2;
+      const loser = team1Won ? game.team2 : game.team1;
 
-      {
-        playoffGames.map(game => {
-          const team1Won = game.team1Score > game.team2Score;
-          const team2Won = game.team2Score > game.team1Score;
+      const winnerScore = team1Won ? game.team1Score : game.team2Score;
+      const loserScore = team1Won ? game.team2Score : game.team1Score;
 
-          let winner = "Tie";
+      const maxPlayoffWeek = Math.max(...playoffGames.map(row => row.week));
 
-          if (team1Won) {
-            winner = game.team1;
-          } else if (team2Won) {
-            winner = game.team2;
-          }
+      const gameTypeLabel =
+        game.gameType === "P" && game.week === maxPlayoffWeek
+          ? "Championship"
+          : game.gameType === "P"
+            ? "Playoff"
+            : "Consolation";
 
-          return (
-            <tr>
-              <td>{game.week}</td>
-              <td>{game.gameType === "P" ? "Playoff" : "Consolation"}</td>
-              <td>{game.finalSeeding}</td>
-              <td>
-                <a href={`/owners/${slugifyOwner(game.team1)}`}>
-                  {game.team1}
-                </a>
-              </td>
-              <td>{game.team1Score.toFixed(2)}</td>
-              <td>
-                <a href={`/owners/${slugifyOwner(game.team2)}`}>
-                  {game.team2}
-                </a>
-              </td>
-              <td>{game.team2Score.toFixed(2)}</td>
-              <td>
-                {winner === "Tie" ? (
-                  "Tie"
-                ) : (
-                  <a href={`/owners/${slugifyOwner(winner)}`}>
-                    {winner}
-                  </a>
-                )}
-              </td>
-            </tr>
-          );
-        })
-      }
-    </table>
+      return (
+        <tr>
+          <td>{game.week}</td>
+          <td>{gameTypeLabel}</td>
+          <td>
+            <a href={`/owners/${slugifyOwner(winner)}`}>
+              {stats.shortOwnerName(winner)}
+            </a>
+          </td>
+          <td>{winnerScore.toFixed(2)}</td>
+          <td>
+            <a href={`/owners/${slugifyOwner(loser)}`}>
+              {stats.shortOwnerName(loser)}
+            </a>
+          </td>
+          <td>{loserScore.toFixed(2)}</td>
+        </tr>
+      );
+    })
+  }
+</table>
+</div>
+<h2>All Games</h2>
+<div class="table-wrap">
+<table>
+  <tr>
+    <th>Week</th>
+    <th>Game Type</th>
+    <th>Winner</th>
+    <th>Score</th>
+    <th>Loser</th>
+    <th>Score</th>
+  </tr>
 
-    <h2>All Games</h2>
+  {
+    games.map(game => {
+      const team1Won = game.team1Score > game.team2Score;
 
-    <table>
-      <tr>
-        <th>Week</th>
-        <th>Game Type</th>
-        <th>Team 1</th>
-        <th>Score</th>
-        <th>Team 2</th>
-        <th>Score</th>
-        <th>Winner</th>
-      </tr>
+      const winner = team1Won ? game.team1 : game.team2;
+      const loser = team1Won ? game.team2 : game.team1;
 
-      {
-        games.map(game => {
-          const team1Won = game.team1Score > game.team2Score;
-          const team2Won = game.team2Score > game.team1Score;
+      const winnerScore = team1Won ? game.team1Score : game.team2Score;
+      const loserScore = team1Won ? game.team2Score : game.team1Score;
 
-          let winner = "Tie";
-
-          if (team1Won) {
-            winner = game.team1;
-          } else if (team2Won) {
-            winner = game.team2;
-          }
-
-          return (
-            <tr>
-              <td>{game.week}</td>
-              <td>{game.gameType}</td>
-              <td>
-                <a href={`/owners/${slugifyOwner(game.team1)}`}>
-                  {game.team1}
-                </a>
-              </td>
-              <td>{game.team1Score.toFixed(2)}</td>
-              <td>
-                <a href={`/owners/${slugifyOwner(game.team2)}`}>
-                  {game.team2}
-                </a>
-              </td>
-              <td>{game.team2Score.toFixed(2)}</td>
-              <td>
-                {winner === "Tie" ? (
-                  "Tie"
-                ) : (
-                  <a href={`/owners/${slugifyOwner(winner)}`}>
-                    {winner}
-                  </a>
-                )}
-              </td>
-            </tr>
-          );
-        })
-      }
-    </table>
+      return (
+        <tr>
+          <td>{game.week}</td>
+          <td>{game.gameType}</td>
+          <td>
+            <a href={`/owners/${slugifyOwner(winner)}`}>
+              {stats.shortOwnerName(winner)}
+            </a>
+          </td>
+          <td>{winnerScore.toFixed(2)}</td>
+          <td>
+            <a href={`/owners/${slugifyOwner(loser)}`}>
+              {stats.shortOwnerName(loser)}
+            </a>
+          </td>
+          <td>{loserScore.toFixed(2)}</td>
+        </tr>
+      );
+    })
+  }
+</table>
+</div>
   </body>
 </html>
+</Layout>

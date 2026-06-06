@@ -82,6 +82,20 @@ export function getOwnerList(games) {
     }));
 }
 
+export function shortOwnerName(ownerName) {
+  const parts = ownerName.trim().split(/\s+/);
+
+  if (parts.length === 1) {
+    return ownerName;
+  }
+
+  const firstName = parts[0];
+  const lastInitial = parts[parts.length - 1][0];
+
+  return `${firstName} ${lastInitial}.`;
+}
+
+
 export function getGamesForOwner(games, ownerName) {
   return games.filter(
     game => game.team1 === ownerName || game.team2 === ownerName

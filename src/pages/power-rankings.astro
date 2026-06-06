@@ -1,24 +1,21 @@
 ---
 import { getGameLog, getOwners } from "../lib/data";
-import { getPowerRankings, slugifyOwner } from "../lib/stats";
-import "../styles/style.css";
-import Nav from "../components/Nav.astro";
+import { getPowerRankings, shortOwnerName, slugifyOwner } from "../lib/stats";
+import Layout from "../layouts/layout.astro";
 
 const gameLog = getGameLog();
 const owners = getOwners();
 
 const rankings = getPowerRankings(gameLog, owners);
 ---
-
+<Layout title="Power Rankings">
 <html>
   <body>
-    <Nav />
-
     <h1>&#128200; Power Rankings</h1>
 
     <p>
       Composite ranking based on championships, runner-ups, regular season wins,
-      playoff wins, win percentage, scoring, and toilet bowls.
+      playoff wins, win percentage, scoring, and last place finishes.
     </p>
 
     <label for="ranking-filter">Show:</label>
@@ -27,7 +24,7 @@ const rankings = getPowerRankings(gameLog, owners);
       <option value="all">All-Time Teams</option>
       <option value="active">Current Teams</option>
     </select>
-
+<div class="table-wrap">
     <table id="power-rankings-table">
       <tr>
         <th>Rank</th>
@@ -48,7 +45,7 @@ const rankings = getPowerRankings(gameLog, owners);
             <td class="rank-cell">{row.rank}</td>
             <td>
               <a href={`/owners/${slugifyOwner(row.owner)}`}>
-                {row.owner}
+                {shortOwnerName(row.owner)}
               </a>
             </td>
             <td>{row.score.toFixed(1)}</td>
@@ -63,9 +60,9 @@ const rankings = getPowerRankings(gameLog, owners);
         ))
       }
     </table>
-
+</div>
     <h2>Formula</h2>
-
+<div class="table-wrap">
     <table>
       <tr>
         <th>Metric</th>
@@ -100,7 +97,7 @@ const rankings = getPowerRankings(gameLog, owners);
         <td>-15</td>
       </tr>
     </table>
-
+</div>
     <script>
       const filter = document.getElementById("ranking-filter");
       const table = document.getElementById("power-rankings-table");
@@ -129,3 +126,4 @@ const rankings = getPowerRankings(gameLog, owners);
     </script>
   </body>
 </html>
+</Layout>

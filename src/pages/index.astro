@@ -4,7 +4,8 @@ import {
   calculateOwnerRecords,
   calculateChampionships,
   calculateToiletBowls,
-  slugifyOwner
+  slugifyOwner,
+  shortOwnerName
 } from "../lib/stats";
 import Layout from "../layouts/layout.astro";
 
@@ -84,7 +85,7 @@ function emptyRecord(ownerName) {
       <option value="all">All Owners</option>
       <option value="active">Active Owners</option>
     </select>
-
+<br>
     <label for="game-type-filter">Game Type:</label>
 
     <select id="game-type-filter">
@@ -168,7 +169,7 @@ function emptyRecord(ownerName) {
             >
               <td>
                 <a href={`/owners/${slugifyOwner(ownerGroup.owner)}`}>
-                  {ownerGroup.owner}
+                   {shortOwnerName(ownerGroup.owner)}
                 </a>
               </td>
               <td class="wins">{all.wins}</td>
