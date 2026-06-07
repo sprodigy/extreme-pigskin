@@ -2,7 +2,8 @@
 import { getGameLog, getOwners } from "../lib/data";
 import {
   getOwnerList,
-  getHeadToHeadStats
+  getHeadToHeadStats,
+  shortOwnerName
 } from "../lib/stats";
 import Layout from "../layouts/layout.astro";
 
@@ -13,6 +14,12 @@ const ownerStatuses = getOwners();
 const activeOwnerNames = ownerStatuses
   .filter(owner => owner.status === "ACTIVE")
   .map(owner => owner.owner);
+
+const ownerDisplayNames = {};
+
+for (const owner of owners) {
+  ownerDisplayNames[owner.owner] = shortOwnerName(owner.owner);
+}
 
 const matchupStats = {};
 
@@ -62,7 +69,7 @@ for (const ownerA of owners) {
 
       <div id="results"></div>
 
-      <script define:vars={{ matchupStats, owners, activeOwnerNames }}>
+      <script define:vars={{ matchupStats, owners, activeOwnerNames, ownerDisplayNames }}>
         const ownerASelect = document.getElementById("owner-a");
         const ownerBSelect = document.getElementById("owner-b");
         const currentOwnersOnly = document.getElementById("current-owners-only");
@@ -70,6 +77,10 @@ for (const ownerA of owners) {
 
         const allOwners = owners.map(owner => owner.owner);
         const activeOwners = new Set(activeOwnerNames);
+
+        function displayName(owner) {
+          return ownerDisplayNames[owner] ?? owner;
+        }
 
         function populateDropdown(select, selectedValue) {
           const useCurrentOnly = currentOwnersOnly.checked;
@@ -114,12 +125,15 @@ for (const ownerA of owners) {
         function formatGame(game, ownerA, ownerB) {
           if (!game) return "N/A";
 
-          return `${game.year} Week ${game.week}: ${ownerA} ${game.ownerAScore.toFixed(2)}, ${ownerB} ${game.ownerBScore.toFixed(2)} - Margin ${game.margin.toFixed(2)}`;
+          return `${game.year} Week ${game.week}: ${displayName(ownerA)} ${game.ownerAScore.toFixed(2)}, ${displayName(ownerB)} ${game.ownerBScore.toFixed(2)} - Margin ${game.margin.toFixed(2)}`;
         }
 
         function render() {
           const ownerA = ownerASelect.value;
           const ownerB = ownerBSelect.value;
+
+          const ownerADisplay = displayName(ownerA);
+          const ownerBDisplay = displayName(ownerB);
 
           if (!ownerA || !ownerB) {
             results.innerHTML = "";
@@ -135,7 +149,7 @@ for (const ownerA of owners) {
           const stats = matchupStats[key];
 
           if (!stats || stats.gamesPlayed === 0) {
-            results.innerHTML = `<p>No matchups found between ${ownerA} and ${ownerB}.</p>`;
+            results.innerHTML = `<p>No matchups found between ${ownerADisplay} and ${ownerBDisplay}.</p>`;
             return;
           }
 
@@ -158,11 +172,11 @@ for (const ownerA of owners) {
                 </tr>
                 <tr>
                   <td>Total Points</td>
-                  <td>${ownerA}: ${stats.ownerAPoints.toFixed(2)}<br />${ownerB}: ${stats.ownerBPoints.toFixed(2)}</td>
+                  <td>${ownerADisplay}: ${stats.ownerAPoints.toFixed(2)}<br />${ownerBDisplay}: ${stats.ownerBPoints.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td>Average Score</td>
-                  <td>${ownerA}: ${stats.ownerAAverage.toFixed(2)}<br />${ownerB}: ${stats.ownerBAverage.toFixed(2)}</td>
+                  <td>${ownerADisplay}: ${stats.ownerAAverage.toFixed(2)}<br />${ownerBDisplay}: ${stats.ownerBAverage.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td>Regular Season Record</td>
@@ -177,11 +191,11 @@ for (const ownerA of owners) {
                   <td>${formatRecord(stats.consolation.ownerAWins, stats.consolation.ownerBWins, stats.consolation.ties)}</td>
                 </tr>
                 <tr>
-                  <td>Biggest ${ownerA} Win</td>
+                  <td>Biggest ${ownerADisplay} Win</td>
                   <td>${formatGame(stats.biggestOwnerAWin, ownerA, ownerB)}</td>
                 </tr>
                 <tr>
-                  <td>Biggest ${ownerB} Win</td>
+                  <td>Biggest ${ownerBDisplay} Win</td>
                   <td>${formatGame(stats.biggestOwnerBWin, ownerA, ownerB)}</td>
                 </tr>
                 <tr>
@@ -199,8 +213,8 @@ for (const ownerA of owners) {
                     <table>
                       <tr>
                         <th>Year</th>
-                        <th>${ownerA}</th>
-                        <th>${ownerB}</th>
+                        <th>${ownerADisplay}</th>
+                        <th>${ownerBDisplay}</th>
                         <th>Winner</th>
                       </tr>
 
@@ -209,7 +223,7 @@ for (const ownerA of owners) {
                           <td>${game.year}</td>
                           <td>${game.ownerAScore.toFixed(2)}</td>
                           <td>${game.ownerBScore.toFixed(2)}</td>
-                          <td>${game.winner}</td>
+                          <td>${game.winner === "Tie" ? "Tie" : displayName(game.winner)}</td>
                         </tr>
                       `).join("")}
                     </table>
@@ -226,8 +240,8 @@ for (const ownerA of owners) {
                   <th>Year</th>
                   <th>Week</th>
                   <th>Type</th>
-                  <th>${ownerA}</th>
-                  <th>${ownerB}</th>
+                  <th>${ownerADisplay}</th>
+                  <th>${ownerBDisplay}</th>
                   <th>Winner</th>
                   <th>Margin</th>
                 </tr>
@@ -239,7 +253,7 @@ for (const ownerA of owners) {
                     <td>${game.gameType}</td>
                     <td>${game.ownerAScore.toFixed(2)}</td>
                     <td>${game.ownerBScore.toFixed(2)}</td>
-                    <td>${game.winner}</td>
+                    <td>${game.winner === "Tie" ? "Tie" : displayName(game.winner)}</td>
                     <td>${game.margin.toFixed(2)}</td>
                   </tr>
                 `).join("")}
@@ -251,6 +265,15 @@ for (const ownerA of owners) {
         currentOwnersOnly.addEventListener("change", refreshDropdowns);
         ownerASelect.addEventListener("change", render);
         ownerBSelect.addEventListener("change", render);
+
+        const params = new URLSearchParams(window.location.search);
+        const ownerAFromUrl = params.get("ownerA");
+        const ownerBFromUrl = params.get("ownerB");
+        if (ownerAFromUrl && ownerBFromUrl) {
+          ownerASelect.value = ownerAFromUrl;
+          ownerBSelect.value = ownerBFromUrl;
+          render();
+}
       </script>
     </body>
   </html>

@@ -188,3 +188,60 @@ option {
     padding: 0.3rem 0.45rem;
   }
 }
+
+.owner-hero {
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.owner-hero h1 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.owner-summary-grid,
+.quick-facts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.stat-card {
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+  padding: 0.65rem;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #aaaaaa;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.achievement-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.achievement-pill {
+  background: #2d2d30;
+  border: 1px solid #3c3c3c;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-weight: bold;
+}

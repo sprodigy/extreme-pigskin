@@ -10,7 +10,8 @@ import {
   getOwnerChampionshipResults,
   getOpponentRecords,
   getOwnerQuickFacts,
-  getOwnerSeasonRecords
+  getOwnerSeasonRecords,
+  shortOwnerName
 } from "../../lib/stats";
 
 export function getStaticPaths() {
@@ -60,6 +61,12 @@ const championshipResults =
 const rivalries =
   getOpponentRecords(gameLog, ownerName);
 
+const biggestRival = rivalries.length > 0 ? rivalries[0] : null;
+
+const biggestRivalUrl = biggestRival
+  ? `/head-to-head?ownerA=${encodeURIComponent(ownerName)}&ownerB=${encodeURIComponent(biggestRival.opponent)}`
+  : null;
+
 const sortedGames = [...games].sort((a, b) => {
   if (b.year !== a.year) return b.year - a.year;
   return b.week - a.week;
@@ -70,141 +77,150 @@ const sortedGames = [...games].sort((a, b) => {
 <Layout title="Owner Deep Dive">
 <html>
   <body>
-    <h1>{ownerName} &#128100;</h1>
+<section class="owner-hero">
+  <h1>{ownerName} &#128100;</h1>
 
-    <h2>Quick Facts</h2>
+  <div class="owner-summary-grid">
+    <div class="stat-card">
+      <span class="stat-label">Career Record</span>
+      <span class="stat-value">
+        {record.wins}-{record.losses}
+        {record.ties > 0 ? `-${record.ties}` : ""}
+      </span>
+    </div>
 
-    <ul>
-      <li>Seasons Played: <strong>{quickFacts.seasonsPlayed}</strong></li>
+    <div class="stat-card">
+      <span class="stat-label">Win %</span>
+      <span class="stat-value">{record.winPct.toFixed(3)}</span>
+    </div>
 
-      <li>
-        Best Finish:
-        <strong>
-          {
-            quickFacts.bestFinish
-              ? `${quickFacts.bestFinish.finish}${quickFacts.bestFinish.finish === 1 ? "st" : quickFacts.bestFinish.finish === 2 ? "nd" : quickFacts.bestFinish.finish === 3 ? "rd" : "th"} in ${quickFacts.bestFinish.year}`
-              : "N/A"
-          }
-        </strong>
-      </li>
+    <div class="stat-card">
+      <span class="stat-label">Games Played</span>
+      <span class="stat-value">{record.gamesPlayed}</span>
+    </div>
 
-      <li>Postseason Appearances: <strong>{quickFacts.postseasonAppearances}</strong></li>
-      <li>Championship Appearances: <strong>{quickFacts.championshipAppearances}</strong></li>
-      <li>Toilet Bowl Appearances: <strong>{quickFacts.toiletBowlAppearances}</strong></li>
-      <li>Last-Place Finishes: <strong>{quickFacts.lastPlaceFinishes}</strong></li>
-      <li>Swept the League: <strong>{quickFacts.sweptLeague.length}</strong></li>
-      <li>Swept by the League: <strong>{quickFacts.sweptByLeague.length}</strong></li>
+    <div class="stat-card">
+      <span class="stat-label">Points For</span>
+      <span class="stat-value">{Math.round(record.pointsFor).toLocaleString()}</span>
+    </div>
 
-      <li>
-        Best Regular Season:
-        <strong>
-          {quickFacts.bestRegularSeason.wins}-{quickFacts.bestRegularSeason.losses}
-          {quickFacts.bestRegularSeason.ties > 0 ? `-${quickFacts.bestRegularSeason.ties}` : ""}
-           ({quickFacts.bestRegularSeason.year})
-        </strong>
-      </li>
+    <div class="stat-card">
+      <span class="stat-label">Points Against</span>
+      <span class="stat-value">{Math.round(record.pointsAgainst).toLocaleString()}</span>
+    </div>
+  </div>
 
-      <li>
-        Worst Regular Season:
-        <strong>
-          {quickFacts.worstRegularSeason.wins}-{quickFacts.worstRegularSeason.losses}
-          {quickFacts.worstRegularSeason.ties > 0 ? `-${quickFacts.worstRegularSeason.ties}` : ""}
-           ({quickFacts.worstRegularSeason.year})
-        </strong>
-      </li>
+  <div class="achievement-row">
+    <span class="achievement-pill">&#127942; {ownerTitles} Championships</span>
+    <span class="achievement-pill">&#129352; {ownerRunnerUps} Runner-Ups</span>
+    <span class="achievement-pill">&#128701; {quickFacts.lastPlaceFinishes} Last-Place Finishes</span>
+  </div>
 
-      <li>
-        Highest Scoring Week:
-        <strong>
-          {quickFacts.highestScoringWeek.score.toFixed(2)}
-          vs {quickFacts.highestScoringWeek.opponent}
-          ({quickFacts.highestScoringWeek.year}, Week {quickFacts.highestScoringWeek.week})
-        </strong>
-      </li>
 
-      <li>
-        Lowest Scoring Week:
-        <strong>
-          {quickFacts.lowestScoringWeek.score.toFixed(2)}
-          vs {quickFacts.lowestScoringWeek.opponent}
-          ({quickFacts.lowestScoringWeek.year}, Week {quickFacts.lowestScoringWeek.week})
-        </strong>
-      </li>
+</section>
 
-      <li>
-        Longest Winning Streak:
-        <strong>{quickFacts.longestWinningStreak.games}</strong>
-      </li>
+<h2>Quick Facts</h2>
 
-      <li>
-        Longest Losing Streak:
-        <strong>{quickFacts.longestLosingStreak.games}</strong>
-      </li>
-    </ul>
+<div class="quick-facts-grid">
+  <div class="stat-card">
+    <span class="stat-label">Seasons Played</span>
+    <span class="stat-value">{quickFacts.seasonsPlayed}</span>
+  </div>
 
-    <h2>League Achievements</h2>
-
-    <p>Championships: <strong>{ownerTitles}</strong></p>
-    <p>Runner-Ups: <strong>{ownerRunnerUps}</strong></p>
-
-    {
-      championshipResults.championshipSeasons.length > 0 && (
-        <p>
-          Championship Seasons:{" "}
-          <strong>{championshipResults.championshipSeasons.join(", ")}</strong>
-        </p>
-      )
-    }
-
-    {
-      championshipResults.runnerUpSeasons.length > 0 && (
-        <p>
-          Runner-Up Seasons:{" "}
-          <strong>{championshipResults.runnerUpSeasons.join(", ")}</strong>
-        </p>
-      )
-    }
-
-    <h2>All-Time Record</h2>
-
-    <p>
-      {record.wins}-{record.losses}
-      {record.ties > 0 ? `-${record.ties}` : ""}
-      ({record.winPct.toFixed(3)})
-    </p>
-
-    <p>Games Played: {record.gamesPlayed}</p>
-    <p>Points For: {record.pointsFor.toFixed(2)}</p>
-    <p>Points Against: {record.pointsAgainst.toFixed(2)}</p>
-
-    <h2>Rivalries</h2>
-<div class="table-wrap">
-    <table>
-      <tr>
-        <th>Opponent</th>
-        <th>Record</th>
-        <th>Games</th>
-      </tr>
-
+  <div class="stat-card">
+    <span class="stat-label">Best Finish</span>
+    <span class="stat-value">
       {
-        rivalries.map(rival => (
-          <tr>
-            <td>{rival.opponent}</td>
-            <td>
-              {rival.wins}-{rival.losses}
-              {rival.ties > 0 ? `-${rival.ties}` : ""}
-            </td>
-            <td>{rival.gamesPlayed}</td>
-          </tr>
-        ))
+        quickFacts.bestFinish
+          ? `${quickFacts.bestFinish.finish}${quickFacts.bestFinish.finish === 1 ? "st" : quickFacts.bestFinish.finish === 2 ? "nd" : quickFacts.bestFinish.finish === 3 ? "rd" : "th"}`
+          : "N/A"
       }
-    </table>
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Postseason Appearances</span>
+    <span class="stat-value">{quickFacts.postseasonAppearances}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Championship Appearances</span>
+    <span class="stat-value">{quickFacts.championshipAppearances}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Toilet Bowl Appearances</span>
+    <span class="stat-value">{quickFacts.toiletBowlAppearances}</span>
+  </div>
+
+  {
+  biggestRival && (
+    <div class="stat-card">
+      <span class="stat-label">Biggest Rival</span>
+      <span class="stat-value">
+        <a href={biggestRivalUrl}>
+          {shortOwnerName(biggestRival.opponent)}
+          {" "}
+          ({biggestRival.wins}-{biggestRival.losses}
+          {biggestRival.ties > 0 ? `-${biggestRival.ties}` : ""})
+        </a>
+      </span>
+    </div>
+  )
+}
+
+  <div class="stat-card">
+    <span class="stat-label">Swept League</span>
+    <span class="stat-value">{quickFacts.sweptLeague.length}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Swept by League</span>
+    <span class="stat-value">{quickFacts.sweptByLeague.length}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Best Regular Season</span>
+    <span class="stat-value">
+      {quickFacts.bestRegularSeason.wins}-{quickFacts.bestRegularSeason.losses}
+      {quickFacts.bestRegularSeason.ties > 0 ? `-${quickFacts.bestRegularSeason.ties}` : ""}
+      ({quickFacts.bestRegularSeason.year})
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Worst Regular Season</span>
+    <span class="stat-value">
+      {quickFacts.worstRegularSeason.wins}-{quickFacts.worstRegularSeason.losses}
+      {quickFacts.worstRegularSeason.ties > 0 ? `-${quickFacts.worstRegularSeason.ties}` : ""}
+      ({quickFacts.worstRegularSeason.year})
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Highest Scoring Week</span>
+    <span class="stat-value">
+      {quickFacts.highestScoringWeek.score.toFixed(2)}
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Lowest Scoring Week</span>
+    <span class="stat-value">
+      {quickFacts.lowestScoringWeek.score.toFixed(2)}
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Longest Win Streak</span>
+    <span class="stat-value">{quickFacts.longestWinningStreak.games}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Longest Losing Streak</span>
+    <span class="stat-value">{quickFacts.longestLosingStreak.games}</span>
+  </div>
 </div>
-    <OwnerPointsChart
-  chartId={`owner-points-${ownerName.replaceAll(" ", "-").toLowerCase()}`}
-  labels={chartLabels}
-  points={chartPoints}
-/>
 
 <h2>Regular Season Record by Year</h2>
 <div class="table-wrap">
