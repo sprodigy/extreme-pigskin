@@ -33,7 +33,7 @@ const records = getRecordBook(gameLog);
               </a>
             </td>
             <td>{row.score.toFixed(2)}</td>
-            <td>{row.opponent}</td>
+            <td>{shortOwnerName(row.opponent)}</td>
             <td>{row.year}</td>
             <td>{row.week}</td>
           </tr>
@@ -60,10 +60,10 @@ const records = getRecordBook(gameLog);
             <td>{index + 1}</td>
             <td>
               <a href={`/owners/${slugifyOwner(game.winner)}`}>
-                {game.winner}
+                {shortOwnerName(game.winner)}
               </a>
             </td>
-            <td>{game.loser}</td>
+            <td>{shortOwnerName(game.loser)}</td>
             <td>
               {game.winnerScore.toFixed(2)} - {game.loserScore.toFixed(2)}
             </td>
@@ -95,10 +95,10 @@ const records = getRecordBook(gameLog);
             <td>{index + 1}</td>
             <td>
               <a href={`/owners/${slugifyOwner(game.winner)}`}>
-                {game.winner}
+                {shortOwnerName(game.winner)}
               </a>
             </td>
-            <td>{game.loser}</td>
+            <td>{shortOwnerName(game.loser)}</td>
             <td>
               {game.winnerScore.toFixed(2)} - {game.loserScore.toFixed(2)}
             </td>
@@ -126,7 +126,7 @@ const records = getRecordBook(gameLog);
         records.highestCombinedScores.map((game, index) => (
           <tr>
             <td>{index + 1}</td>
-            <td>{game.team1} vs {game.team2}</td>
+            <td>{shortOwnerName(game.team1)} vs {shortOwnerName(game.team2)}</td>
             <td>
               {game.team1Score.toFixed(2)} - {game.team2Score.toFixed(2)}
             </td>
@@ -156,10 +156,10 @@ const records = getRecordBook(gameLog);
             <td>{index + 1}</td>
             <td>
               <a href={`/owners/${slugifyOwner(game.winner)}`}>
-                {game.winner}
+                {shortOwnerName(game.winner)}
               </a>
             </td>
-            <td>{game.loser}</td>
+            <td>{shortOwnerName(game.loser)}</td>
             <td>
               {game.winnerScore.toFixed(2)} - {game.loserScore.toFixed(2)}
             </td>
@@ -169,7 +169,7 @@ const records = getRecordBook(gameLog);
         ))
       }
     </table>
-  </div>>
+  </div>
     <h2>Lowest Scores</h2>
 <div class="table-wrap">
     <table>
@@ -177,7 +177,6 @@ const records = getRecordBook(gameLog);
         <th>Rank</th>
         <th>Owner</th>
         <th>Score</th>
-        <th>Opponent</th>
         <th>Year</th>
         <th>Week</th>
       </tr>
@@ -188,11 +187,10 @@ const records = getRecordBook(gameLog);
             <td>{index + 1}</td>
             <td>
               <a href={`/owners/${slugifyOwner(row.owner)}`}>
-                {row.owner}
+                {shortOwnerName(row.owner)}
               </a>
             </td>
             <td>{row.score.toFixed(2)}</td>
-            <td>{row.opponent}</td>
             <td>{row.year}</td>
             <td>{row.week}</td>
           </tr>

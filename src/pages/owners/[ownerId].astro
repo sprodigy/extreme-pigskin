@@ -46,7 +46,7 @@ const chartPoints = regularSeasonChartData.map(row => row.pointsFor);
 const record = getOwnerRecord(gameLog, ownerName);
 const games = getGamesForOwner(gameLog, ownerName);
 const quickFacts = getOwnerQuickFacts(gameLog, ownerName);
-
+const pointDifferential = record.pointsFor - record.pointsAgainst;
 const championships = calculateChampionships(gameLog);
 
 const ownerTitles =
@@ -57,6 +57,9 @@ const ownerRunnerUps =
 
 const championshipResults =
   getOwnerChampionshipResults(gameLog, ownerName);
+
+const championshipSeasonSet = new Set(championshipResults.championshipSeasons);
+const runnerUpSeasonSet = new Set(championshipResults.runnerUpSeasons);
 
 const rivalries =
   getOpponentRecords(gameLog, ownerName);
@@ -70,9 +73,30 @@ const biggestRivalUrl = biggestRival
 const sortedGames = [...games].sort((a, b) => {
   if (b.year !== a.year) return b.year - a.year;
   return b.week - a.week;
-
-  
 });
+
+function formatStreakYears(streak) {
+  if (!streak?.start || !streak?.end) return [];
+
+  const startYear = streak.start.year;
+  const endYear = streak.end.year;
+
+  if (startYear === endYear) {
+    return [startYear];
+  }
+
+  const years = [];
+
+  for (let year = startYear; year <= endYear; year++) {
+    years.push(year);
+  }
+
+  return years;
+}
+
+const winningStreakYears = formatStreakYears(quickFacts.longestWinningStreak);
+const losingStreakYears = formatStreakYears(quickFacts.longestLosingStreak);
+
 ---
 <Layout title="Owner Deep Dive">
 <html>
@@ -108,7 +132,19 @@ const sortedGames = [...games].sort((a, b) => {
       <span class="stat-label">Points Against</span>
       <span class="stat-value">{Math.round(record.pointsAgainst).toLocaleString()}</span>
     </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Point Differential</span>
+    <span class="stat-value">
+      {pointDifferential > 0 ? "+" : ""}
+      {Math.round(pointDifferential).toLocaleString()}
+    </span>
   </div>
+
+
+  </div>
+
+  
 
   <div class="achievement-row">
     <span class="achievement-pill">&#127942; {ownerTitles} Championships</span>
@@ -197,29 +233,59 @@ const sortedGames = [...games].sort((a, b) => {
     </span>
   </div>
 
-  <div class="stat-card">
-    <span class="stat-label">Highest Scoring Week</span>
-    <span class="stat-value">
-      {quickFacts.highestScoringWeek.score.toFixed(2)}
-    </span>
-  </div>
+<div class="stat-card">
+  <span class="stat-label">Highest Scoring Week</span>
+  <span class="stat-value">
+    {quickFacts.highestScoringWeek.score.toFixed(2)} 
+    <a href={`/seasons/${quickFacts.highestScoringWeek.year}`}>
+      ({quickFacts.highestScoringWeek.year})
+    </a>
+  </span>
+</div>
 
-  <div class="stat-card">
-    <span class="stat-label">Lowest Scoring Week</span>
-    <span class="stat-value">
-      {quickFacts.lowestScoringWeek.score.toFixed(2)}
-    </span>
-  </div>
+<div class="stat-card">
+  <span class="stat-label">Lowest Scoring Week</span>
+  <span class="stat-value">
+    {quickFacts.lowestScoringWeek.score.toFixed(2)} 
+    <a href={`/seasons/${quickFacts.lowestScoringWeek.year}`}>
+      ({quickFacts.lowestScoringWeek.year})
+    </a>
+  </span>
+</div>
 
-  <div class="stat-card">
-    <span class="stat-label">Longest Win Streak</span>
-    <span class="stat-value">{quickFacts.longestWinningStreak.games}</span>
-  </div>
+<div class="stat-card">
+  <span class="stat-label">Longest Win Streak</span>
+  <span class="stat-value">
+    {quickFacts.longestWinningStreak.games}
+    <br />
+    {
+      winningStreakYears.map((year, index) => (
+        <>
+          <a href={`/seasons/${year}`}>{year}</a>
+          {index < winningStreakYears.length - 1 ? ", " : ""}
+        </>
+      ))
+    }
+  </span>
+</div>
 
-  <div class="stat-card">
-    <span class="stat-label">Longest Losing Streak</span>
-    <span class="stat-value">{quickFacts.longestLosingStreak.games}</span>
-  </div>
+<div class="stat-card">
+  <span class="stat-label">Longest Losing Streak</span>
+  <span class="stat-value">
+    {quickFacts.longestLosingStreak.games}
+    <br />
+    {
+      losingStreakYears.map((year, index) => (
+        <>
+          <a href={`/seasons/${year}`}>{year}</a>
+          {index < losingStreakYears.length - 1 ? ", " : ""}
+        </>
+      ))
+    }
+  </span>
+</div>
+
+
 </div>
 
 <h2>Regular Season Record by Year</h2>
@@ -234,6 +300,7 @@ const sortedGames = [...games].sort((a, b) => {
     <th>PF</th>
     <th>PA</th>
     <th>GP</th>
+    <th></th>
   </tr>
 
   {
@@ -247,6 +314,16 @@ const sortedGames = [...games].sort((a, b) => {
         <td>{Math.round(season.pointsFor).toLocaleString()}</td>
         <td>{Math.round(season.pointsAgainst).toLocaleString()}</td>
         <td>{season.gamesPlayed}</td>
+        <td>
+            {
+              championshipSeasonSet.has(season.year) ? (
+                <span title="Champion">&#127942;</span>
+              ) : runnerUpSeasonSet.has(season.year) ? (
+                <span title="Runner-Up">&#129352;</span>
+              ) : (
+                ""
+              )
+            }</td>
       </tr>
     ))
   }
@@ -260,6 +337,7 @@ const sortedGames = [...games].sort((a, b) => {
   <td>{Math.round(regularSeasonRecords.total.pointsFor).toLocaleString()}</td>
   <td>{Math.round(regularSeasonRecords.total.pointsAgainst).toLocaleString()}</td>
   <td>{regularSeasonRecords.total.gamesPlayed}</td>
+  <td></td>
 </tr>
 </table>
 </div>
@@ -277,6 +355,7 @@ const sortedGames = [...games].sort((a, b) => {
     <th>PF</th>
     <th>PA</th>
     <th>GP</th>
+    <th></th>
   </tr>
 
   {
@@ -290,6 +369,16 @@ const sortedGames = [...games].sort((a, b) => {
         <td>{Math.round(season.pointsFor).toLocaleString()}</td>
         <td>{Math.round(season.pointsAgainst).toLocaleString()}</td>
         <td>{season.gamesPlayed}</td>
+        <td>
+            {
+              championshipSeasonSet.has(season.year) ? (
+                <span title="Champion">&#127942;</span>
+              ) : runnerUpSeasonSet.has(season.year) ? (
+                <span title="Runner-Up">&#129352;</span>
+              ) : (
+                ""
+              )
+            } </td>
       </tr>
     ))
   }
@@ -303,6 +392,7 @@ const sortedGames = [...games].sort((a, b) => {
   <td>{Math.round(playoffRecords.total.pointsFor).toLocaleString()}</td>
   <td>{Math.round(playoffRecords.total.pointsAgainst).toLocaleString()}</td>
   <td>{playoffRecords.total.gamesPlayed}</td>
+  <td></td>
 </tr>
 </table>
     <h2>Recent Games</h2>

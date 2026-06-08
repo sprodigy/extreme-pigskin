@@ -34,10 +34,26 @@ const olderSeason =
     ? seasons[currentIndex + 1]
     : null;
 const standings = stats.calculateRegularSeasonStandings(gameLog, year);
+const regularSeasonLeader = standings[0];
+const mostRegularSeasonPoints = [...standings]
+  .sort((a, b) => b.pointsFor - a.pointsFor)[0];
 const games = stats.getGamesForSeason(gameLog, year);
 const playoffGames = stats.getPlayoffGamesForSeason(gameLog, year);
 const finishers = stats.getSeasonFinishers(gameLog, year);
 const topTeamsByWeek = stats.getTopTeamsByWeek(gameLog, year);
+const seasonGames = stats.getGamesForSeason(gameLog, year);
+const totalPoints = {};
+
+for (const game of seasonGames) {
+  totalPoints[game.team1] =
+    (totalPoints[game.team1] || 0) + game.team1Score;
+
+  totalPoints[game.team2] =
+    (totalPoints[game.team2] || 0) + game.team2Score;
+}
+
+const mostTotalPoints = Object.entries(totalPoints)
+  .sort((a, b) => b[1] - a[1])[0];
 
 const slugifyOwner = stats.slugifyOwner;
 ---
@@ -90,47 +106,102 @@ const slugifyOwner = stats.slugifyOwner;
       });
     </script>
 
-    <h2>Season Results</h2>
+<h2>Season Results</h2>
 
-    {
-      finishers.champion && (
-        <p>
-          Champion:{" "}
-          <strong>
-            <a href={`/owners/${slugifyOwner(finishers.champion)}`}>
-              {finishers.champion}
-            </a>
-          </strong>
-          {" "}
-          defeated{" "}
+<div class="season-summary-grid">
+
+  {
+    finishers.champion && (
+      <div class="stat-card">
+        <span class="stat-label">&#127942; Champion</span>
+        <span class="stat-value">
+          <a href={`/owners/${slugifyOwner(finishers.champion)}`}>
+            {finishers.champion}
+          </a>
+        </span>
+      </div>
+    )
+  }
+
+  {
+    finishers.runnerUp && (
+      <div class="stat-card">
+        <span class="stat-label">&#129352; Runner-Up</span>
+        <span class="stat-value">
           <a href={`/owners/${slugifyOwner(finishers.runnerUp)}`}>
             {finishers.runnerUp}
           </a>
-          {" "}
-          {finishers.championScore.toFixed(2)} - {finishers.runnerUpScore.toFixed(2)}
-        </p>
-      )
-    }
+        </span>
+      </div>
+    )
+  }
 
-    {
-      finishers.toiletBowlWinner && (
-        <p>
-          Toilet Bowl Winner:{" "}
-          <strong>
-            <a href={`/owners/${slugifyOwner(finishers.toiletBowlWinner)}`}>
-              {finishers.toiletBowlWinner}
-            </a>
-          </strong>
-          {" "}
-          defeated{" "}
-          <a href={`/owners/${slugifyOwner(finishers.toiletBowlLoser)}`}>
-            {finishers.toiletBowlLoser}
+  {
+  regularSeasonLeader && (
+    <div class="stat-card">
+      <span class="stat-label">&#127913; Best Regular Season</span>
+      <span class="stat-value">
+        <a href={`/owners/${slugifyOwner(regularSeasonLeader.owner)}`}>
+          {stats.shortOwnerName(regularSeasonLeader.owner)}
+        </a>
+        <br />
+        {regularSeasonLeader.wins}-{regularSeasonLeader.losses}
+        {regularSeasonLeader.ties > 0
+          ? `-${regularSeasonLeader.ties}`
+          : ""}
+      </span>
+    </div>
+  )
+}
+
+  {
+    finishers.toiletBowlWinner && (
+      <div class="stat-card">
+        <span class="stat-label">&#128701; Toilet Bowl Winner</span>
+        <span class="stat-value">
+          <a href={`/owners/${slugifyOwner(finishers.toiletBowlWinner)}`}>
+            {finishers.toiletBowlWinner}
           </a>
-          {" "}
-          {finishers.toiletBowlWinnerScore.toFixed(2)} - {finishers.toiletBowlLoserScore.toFixed(2)}
-        </p>
-      )
-    }
+        </span>
+      </div>
+    )
+  }
+
+{
+  mostRegularSeasonPoints && (
+    <div class="stat-card">
+      <span class="stat-label">&#128293; Most Regular Season Points</span>
+      <span class="stat-value">
+        <a href={`/owners/${slugifyOwner(mostRegularSeasonPoints.owner)}`}>
+          {stats.shortOwnerName(mostRegularSeasonPoints.owner)}
+        </a>
+        <br />
+        {Math.round(
+          mostRegularSeasonPoints.pointsFor
+        ).toLocaleString()}
+      </span>
+    </div>
+  )
+}
+
+{
+  mostTotalPoints && (
+    <div class="stat-card">
+      <span class="stat-label">&#128200; Most Total Points</span>
+      <span class="stat-value">
+        <a href={`/owners/${slugifyOwner(mostTotalPoints[0])}`}>
+          {stats.shortOwnerName(mostTotalPoints[0])}
+        </a>
+        <br />
+        {Math.round(
+          mostTotalPoints[1]
+        ).toLocaleString()}
+      </span>
+    </div>
+  )
+}
+
+</div>
 <h2>Top Team of the Week</h2>
 <div class="table-wrap">
 <table>
