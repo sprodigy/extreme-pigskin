@@ -1,11 +1,41 @@
+---
+const currentPath = Astro.url.pathname;
+---
+
 <nav class="site-nav">
-  <a href="/">Home &#127968;</a>
-  <a href="/power-rankings">Power &#128200;</a>
-  <a href="/survivor">Survivor &#128170;</a>
-  <a href="/champions">Champions &#127942;</a>
-  <a href="/records">Records &#128214;</a>
-  <a href="/seasons">Seasons &#128197;</a>
-  <a href="/head-to-head">Head-to-Head &#9876;</a>
-  <a href="/hof">HOF &#127941;</a>
-  <a href="/league-notes">&#128216; Notes</a>
+  <a href="/" class={currentPath === "/" ? "active" : ""}>
+    Home &#127968;
+  </a>
+
+  <a href="/power-rankings" class={currentPath.startsWith("/power-rankings") ? "active" : ""}>
+    Power &#128200;
+  </a>
+
+  <a href="/survivor" class={currentPath.startsWith("/survivor") ? "active" : ""}>
+    Survivor &#128170;
+  </a>
+
+  <a href="/champions" class={currentPath.startsWith("/champions") ? "active" : ""}>
+    Champions &#127942;
+  </a>
+
+  <a href="/records" class={currentPath.startsWith("/records") ? "active" : ""}>
+    Records &#128214;
+  </a>
+
+  <a href="/seasons" class={currentPath.startsWith("/seasons") ? "active" : ""}>
+    Seasons &#128197;
+  </a>
+
+  <a href="/head-to-head" class={currentPath.startsWith("/head-to-head") ? "active" : ""}>
+    Head-to-Head &#9876;
+  </a>
+
+  <a href="/hof" class={currentPath.startsWith("/hof") ? "active" : ""}>
+    HOF &#127941;
+  </a>
+
+  <a href="/league-notes" class={currentPath.startsWith("/league-notes") ? "active" : ""}>
+    &#128216; Notes
+  </a>
 </nav>
