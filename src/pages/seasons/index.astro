@@ -11,8 +11,9 @@ const seasons = getSeasonList(gameLog);
   <body>
     <h1>Season Explorer &#128197;</h1>
 
-    <p>Select a season:</p>
 
+<div class="page-card">
+      <p>Select a season:</p>
     <select id="season-select">
       <option value="">Choose year...</option>
       {
@@ -21,7 +22,7 @@ const seasons = getSeasonList(gameLog);
         ))
       }
     </select>
-
+</div>
     <script>
       const select = document.getElementById("season-select");
 

@@ -361,6 +361,40 @@ option {
   margin-bottom: 1rem;
 }
 
+.site-header {
+  text-align: center;
+  margin: 0.75rem 0 1rem;
+}
+
+.site-logo-link {
+  display: inline-block;
+  line-height: 0;
+}
+
+.site-logo {
+  width: clamp(90px, 18vw, 145px);
+  height: auto;
+  display: block;
+  margin: 0 auto 0.5rem;
+
+  filter:
+    drop-shadow(0 0 18px rgba(18, 60, 124, 0.55))
+    drop-shadow(0 0 12px rgba(249, 115, 22, 0.18));
+}
+
+.site-title {
+  font-size: clamp(1.6rem, 6vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--white);
+}
+
+.site-subtitle {
+  color: var(--muted);
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
+  margin-top: 0.25rem;
+}
+
 .site-logo {
   width: 120px;
   height: auto;
@@ -393,12 +427,99 @@ body {
 
 /* For dropdown-heavy pages, also make selects feel like part of the design */
 select {
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+
   background:
-    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01)),
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.05),
+      rgba(255,255,255,.01)
+    ),
     var(--surface);
+
   color: var(--text);
+
   border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.55rem 0.9rem;
-  box-shadow: 0 0 18px rgba(18,60,124,.18);
+  border-radius: 10px;
+
+  padding: 0.6rem 0.8rem;
+
+  font-size: 1rem;
+
+  box-shadow:
+    0 0 18px rgba(18,60,124,.12);
+}
+
+/* Wrap Dropdowns in Cards so not "just a dropdown on a page." */
+.page-card {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.04),
+      rgba(255,255,255,.01)
+    ),
+    var(--surface);
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+
+  padding: 1.25rem;
+
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.30),
+    0 0 20px rgba(18,60,124,.12);
+
+  margin-bottom: 1.5rem;
+}
+
+.page-card h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+/* Layout for Head-to-Head dropdowns */
+.owner-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.owner-select-grid label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.owner-select-grid select {
+  width: 100%;
+}
+
+.filter-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--silver);
+  font-weight: 600;
+}
+
+/* Styling for Head To Head Cards */
+
+
+.h2h-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+@media (min-width: 700px) {
+  .h2h-summary-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
 }

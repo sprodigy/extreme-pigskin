@@ -34,40 +34,43 @@ for (const ownerA of owners) {
 ---
 
 <Layout title="Head-To-Head">
-  <html>
-    <body>
-      <h1>Head-to-Head Matchup &#9876;</h1>
+  <h1>Head-to-Head Matchup &#9876;</h1>
 
-      <label>
-        <input type="checkbox" id="current-owners-only" />
-        Current owners only
-      </label>
+  <div class="page-card">
+    <h2>Matchup Finder</h2>
 
-      <br />
+    <label class="filter-checkbox">
+      <input type="checkbox" id="current-owners-only" />
+      Current owners only
+    </label>
 
-      <label for="owner-a">Owner A:</label>
-      <select id="owner-a">
-        <option value="">Choose owner...</option>
-        {
-          owners.map(owner => (
-            <option value={owner.owner}>{owner.owner}</option>
-          ))
-        }
-      </select>
+    <div class="owner-select-grid">
+      <div>
+        <label for="owner-a">Owner A</label>
+        <select id="owner-a">
+          <option value="">Choose owner...</option>
+          {
+            owners.map(owner => (
+              <option value={owner.owner}>{owner.owner}</option>
+            ))
+          }
+        </select>
+      </div>
 
-      <br />
+      <div>
+        <label for="owner-b">Owner B</label>
+        <select id="owner-b">
+          <option value="">Choose owner...</option>
+          {
+            owners.map(owner => (
+              <option value={owner.owner}>{owner.owner}</option>
+            ))
+          }
+        </select>
+      </div>
+    </div>
 
-      <label for="owner-b">Owner B:</label>
-      <select id="owner-b">
-        <option value="">Choose owner...</option>
-        {
-          owners.map(owner => (
-            <option value={owner.owner}>{owner.owner}</option>
-          ))
-        }
-      </select>
-
-      <div id="results"></div>
+    <div id="results"></div>
 
       <script define:vars={{ matchupStats, owners, activeOwnerNames, ownerDisplayNames }}>
         const ownerASelect = document.getElementById("owner-a");
@@ -156,109 +159,62 @@ for (const ownerA of owners) {
           results.innerHTML = `
             <h2>${ownerA} vs ${ownerB}</h2>
 
-            <div class="table-wrap">
-              <table>
-                <tr>
-                  <th>Category</th>
-                  <th>Result</th>
-                </tr>
-                <tr>
-                  <td>All-Time Record</td>
-                  <td>${formatRecord(stats.ownerAWins, stats.ownerBWins, stats.ties)}</td>
-                </tr>
-                <tr>
-                  <td>Games Played</td>
-                  <td>${stats.gamesPlayed}</td>
-                </tr>
-                <tr>
-                  <td>Total Points</td>
-                  <td>${ownerADisplay}: ${stats.ownerAPoints.toFixed(2)}<br />${ownerBDisplay}: ${stats.ownerBPoints.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td>Average Score</td>
-                  <td>${ownerADisplay}: ${stats.ownerAAverage.toFixed(2)}<br />${ownerBDisplay}: ${stats.ownerBAverage.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td>Regular Season Record</td>
-                  <td>${formatRecord(stats.regular.ownerAWins, stats.regular.ownerBWins, stats.regular.ties)}</td>
-                </tr>
-                <tr>
-                  <td>Playoff Record</td>
-                  <td>${formatRecord(stats.playoffs.ownerAWins, stats.playoffs.ownerBWins, stats.playoffs.ties)}</td>
-                </tr>
-                <tr>
-                  <td>Consolation Record</td>
-                  <td>${formatRecord(stats.consolation.ownerAWins, stats.consolation.ownerBWins, stats.consolation.ties)}</td>
-                </tr>
-                <tr>
-                  <td>Biggest ${ownerADisplay} Win</td>
-                  <td>${formatGame(stats.biggestOwnerAWin, ownerA, ownerB)}</td>
-                </tr>
-                <tr>
-                  <td>Biggest ${ownerBDisplay} Win</td>
-                  <td>${formatGame(stats.biggestOwnerBWin, ownerA, ownerB)}</td>
-                </tr>
-                <tr>
-                  <td>Closest Game</td>
-                  <td>${formatGame(stats.closestGame, ownerA, ownerB)}</td>
-                </tr>
-              </table>
-            </div>
+           <div class="h2h-summary-grid">
+  <div class="stat-card">
+    <span class="stat-label">All-Time<br>Record</span>
+    <span class="stat-value">${formatRecord(stats.ownerAWins, stats.ownerBWins, stats.ties)}</span>
+  </div>
 
-            ${
-              stats.championshipMeetings.length > 0
-                ? `
-                  <h2>Championship Meetings</h2>
-                  <div class="table-wrap">
-                    <table>
-                      <tr>
-                        <th>Year</th>
-                        <th>${ownerADisplay}</th>
-                        <th>${ownerBDisplay}</th>
-                        <th>Winner</th>
-                      </tr>
+  <div class="stat-card">
+    <span class="stat-label">Games<br>Played</span>
+    <span class="stat-value">${stats.gamesPlayed}</span>
+  </div>
 
-                      ${stats.championshipMeetings.map(game => `
-                        <tr>
-                          <td>${game.year}</td>
-                          <td>${game.ownerAScore.toFixed(2)}</td>
-                          <td>${game.ownerBScore.toFixed(2)}</td>
-                          <td>${game.winner === "Tie" ? "Tie" : displayName(game.winner)}</td>
-                        </tr>
-                      `).join("")}
-                    </table>
-                  </div>
-                `
-                : ""
-            }
+  <div class="stat-card">
+    <span class="stat-label">Total Points</span>
+    <span class="stat-value">${ownerADisplay}: ${stats.ownerAPoints.toFixed(2)}</span>
+    <span class="stat-value">${ownerBDisplay}: ${stats.ownerBPoints.toFixed(2)}</span>
+  </div>
 
-            <h2>Recent Meetings</h2>
+  <div class="stat-card">
+    <span class="stat-label">Average Score</span>
+    <span class="stat-value">${ownerADisplay}: ${stats.ownerAAverage.toFixed(2)}</span>
+    <span class="stat-value">${ownerBDisplay}: ${stats.ownerBAverage.toFixed(2)}</span>
+  </div>
 
-            <div class="table-wrap">
-              <table>
-                <tr>
-                  <th>Year</th>
-                  <th>Week</th>
-                  <th>Type</th>
-                  <th>${ownerADisplay}</th>
-                  <th>${ownerBDisplay}</th>
-                  <th>Winner</th>
-                  <th>Margin</th>
-                </tr>
+  <div class="stat-card">
+    <span class="stat-label">Regular Season Record</span>
+    <span class="stat-value">${formatRecord(stats.regular.ownerAWins, stats.regular.ownerBWins, stats.regular.ties)}</span>
+  </div>
 
-                ${stats.recentGames.map(game => `
-                  <tr>
-                    <td>${game.year}</td>
-                    <td>${game.week}</td>
-                    <td>${game.gameType}</td>
-                    <td>${game.ownerAScore.toFixed(2)}</td>
-                    <td>${game.ownerBScore.toFixed(2)}</td>
-                    <td>${game.winner === "Tie" ? "Tie" : displayName(game.winner)}</td>
-                    <td>${game.margin.toFixed(2)}</td>
-                  </tr>
-                `).join("")}
-              </table>
-            </div>
+  <div class="stat-card">
+    <span class="stat-label">Playoff Record</span>
+    <span class="stat-value">${formatRecord(stats.playoffs.ownerAWins, stats.playoffs.ownerBWins, stats.playoffs.ties)}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Consolation Record</span>
+    <span class="stat-value">${formatRecord(stats.consolation.ownerAWins, stats.consolation.ownerBWins, stats.consolation.ties)}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Biggest ${ownerADisplay} Win</span>
+    <span class="stat-value">${stats.biggestOwnerAWin ? stats.biggestOwnerAWin.margin.toFixed(2) : "N/A"}</span>
+    <span class="stat-detail">${stats.biggestOwnerAWin ? `<a href="/seasons/${stats.biggestOwnerAWin.year}">${stats.biggestOwnerAWin.year}</a> Week ${stats.biggestOwnerAWin.week}` : ""}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Biggest ${ownerBDisplay} Win</span>
+    <span class="stat-value">${stats.biggestOwnerBWin ? stats.biggestOwnerBWin.margin.toFixed(2) : "N/A"}</span>
+    <span class="stat-detail">${stats.biggestOwnerBWin ? `<a href="/seasons/${stats.biggestOwnerBWin.year}">${stats.biggestOwnerBWin.year}</a> Week ${stats.biggestOwnerBWin.week}` : ""}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Closest Game</span>
+    <span class="stat-value">${stats.closestGame ? `${stats.closestGame.ownerAScore.toFixed(2)} - ${stats.closestGame.ownerBScore.toFixed(2)}` : "N/A"}</span>
+    <span class="stat-detail">${stats.closestGame ? `Margin ${stats.closestGame.margin.toFixed(2)} • <a href="/seasons/${stats.closestGame.year}">${stats.closestGame.year}</a> Week ${stats.closestGame.week}` : ""}</span>
+  </div>
+</div>
           `;
         }
 
@@ -274,7 +230,6 @@ for (const ownerA of owners) {
           ownerBSelect.value = ownerBFromUrl;
           render();
 }
-      </script>
-    </body>
-  </html>
+    </script>
+  </div>
 </Layout>
