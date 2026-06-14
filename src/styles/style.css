@@ -26,8 +26,15 @@
 
 html,
 body {
+  overflow-anchor: none;
   max-width: 100%;
-  overflow-x: auto;
+}
+
+main {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  min-height: 70vh;
 }
 
 body {
@@ -83,7 +90,7 @@ h3 {
 a {
   color: var(--flame-yellow);
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 a:hover {
@@ -165,17 +172,18 @@ option {
 }
 
 .site-nav {
-  position: sticky;
+ /* position: sticky;
   top: 0;
   z-index: 50;
-
+*/
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.5rem;
 
   margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.75rem;
 }
 
 .site-nav a {
@@ -199,7 +207,6 @@ option {
 
 .site-nav a:hover {
   color: var(--white);
-  transform: translateY(-1px);
   border-color: rgba(249,115,22,.6);
 
   box-shadow:
@@ -377,9 +384,9 @@ option {
   display: block;
   margin: 0 auto 0.5rem;
 
-  filter:
+  /*filter:
     drop-shadow(0 0 18px rgba(18, 60, 124, 0.55))
-    drop-shadow(0 0 12px rgba(249, 115, 22, 0.18));
+    drop-shadow(0 0 12px rgba(249, 115, 22, 0.18)); */
 }
 
 .site-title {
@@ -421,8 +428,8 @@ html {
 
 body {
   min-height: 100vh;
-  background-attachment: fixed;
   background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 
 /* For dropdown-heavy pages, also make selects feel like part of the design */
@@ -509,8 +516,6 @@ select {
 }
 
 /* Styling for Head To Head Cards */
-
-
 .h2h-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -522,4 +527,17 @@ select {
   .h2h-summary-grid {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
+}
+
+.hero-card {
+  text-align: center;
+}
+
+.hero-card h2 {
+  margin-bottom: 0.5rem;
+}
+
+.hero-card p {
+  color: var(--muted);
+  margin: 0.4rem 0;
 }

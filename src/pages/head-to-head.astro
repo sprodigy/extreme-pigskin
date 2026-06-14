@@ -161,56 +161,56 @@ for (const ownerA of owners) {
 
            <div class="h2h-summary-grid">
   <div class="stat-card">
-    <span class="stat-label">All-Time<br>Record</span>
+    <span class="stat-label">All-Time<br>Record &#9876</span>
     <span class="stat-value">${formatRecord(stats.ownerAWins, stats.ownerBWins, stats.ties)}</span>
   </div>
 
   <div class="stat-card">
-    <span class="stat-label">Games<br>Played</span>
+    <span class="stat-label">Games<br>Played &#127918</span>
     <span class="stat-value">${stats.gamesPlayed}</span>
   </div>
 
   <div class="stat-card">
     <span class="stat-label">Total Points</span>
-    <span class="stat-value">${ownerADisplay}: ${stats.ownerAPoints.toFixed(2)}</span>
-    <span class="stat-value">${ownerBDisplay}: ${stats.ownerBPoints.toFixed(2)}</span>
+    ${ownerADisplay}: ${Math.round(stats.ownerAPoints).toLocaleString()}<br>
+    ${ownerBDisplay}: ${Math.round(stats.ownerBPoints).toLocaleString()}
   </div>
 
   <div class="stat-card">
-    <span class="stat-label">Average Score</span>
-    <span class="stat-value">${ownerADisplay}: ${stats.ownerAAverage.toFixed(2)}</span>
-    <span class="stat-value">${ownerBDisplay}: ${stats.ownerBAverage.toFixed(2)}</span>
+    <span class="stat-label">Average Score &#128202;</span>
+  ${ownerADisplay}: ${Math.round(stats.ownerAAverage).toLocaleString()}<br>
+  ${ownerBDisplay}: ${Math.round(stats.ownerBAverage).toLocaleString()}
   </div>
 
   <div class="stat-card">
-    <span class="stat-label">Regular Season Record</span>
+    <span class="stat-label">Regular Season Recordc &#127941;</span>
     <span class="stat-value">${formatRecord(stats.regular.ownerAWins, stats.regular.ownerBWins, stats.regular.ties)}</span>
   </div>
 
   <div class="stat-card">
-    <span class="stat-label">Playoff Record</span>
+    <span class="stat-label">Playoff Record &#127942;</span>
     <span class="stat-value">${formatRecord(stats.playoffs.ownerAWins, stats.playoffs.ownerBWins, stats.playoffs.ties)}</span>
   </div>
 
   <div class="stat-card">
-    <span class="stat-label">Consolation Record</span>
+    <span class="stat-label">Consolation Record &#128701;</span>
     <span class="stat-value">${formatRecord(stats.consolation.ownerAWins, stats.consolation.ownerBWins, stats.consolation.ties)}</span>
   </div>
 
   <div class="stat-card">
-    <span class="stat-label">Biggest ${ownerADisplay} Win</span>
+    <span class="stat-label">Biggest ${ownerADisplay} Win &#128293;</span>
     <span class="stat-value">${stats.biggestOwnerAWin ? stats.biggestOwnerAWin.margin.toFixed(2) : "N/A"}</span>
     <span class="stat-detail">${stats.biggestOwnerAWin ? `<a href="/seasons/${stats.biggestOwnerAWin.year}">${stats.biggestOwnerAWin.year}</a> Week ${stats.biggestOwnerAWin.week}` : ""}</span>
   </div>
 
   <div class="stat-card">
-    <span class="stat-label">Biggest ${ownerBDisplay} Win</span>
+    <span class="stat-label">Biggest ${ownerBDisplay} Win &#128165;</span>
     <span class="stat-value">${stats.biggestOwnerBWin ? stats.biggestOwnerBWin.margin.toFixed(2) : "N/A"}</span>
     <span class="stat-detail">${stats.biggestOwnerBWin ? `<a href="/seasons/${stats.biggestOwnerBWin.year}">${stats.biggestOwnerBWin.year}</a> Week ${stats.biggestOwnerBWin.week}` : ""}</span>
   </div>
 
   <div class="stat-card">
-    <span class="stat-label">Closest Game</span>
+    <span class="stat-label">Closest Game &#129309; </span>
     <span class="stat-value">${stats.closestGame ? `${stats.closestGame.ownerAScore.toFixed(2)} - ${stats.closestGame.ownerBScore.toFixed(2)}` : "N/A"}</span>
     <span class="stat-detail">${stats.closestGame ? `Margin ${stats.closestGame.margin.toFixed(2)} • <a href="/seasons/${stats.closestGame.year}">${stats.closestGame.year}</a> Week ${stats.closestGame.week}` : ""}</span>
   </div>

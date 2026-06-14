@@ -70,30 +70,76 @@ function emptyRecord(ownerName) {
 }
 ---
 <Layout title="Extreme Pigskin">
-<html>
-  <body>
+    <h1>League History</h1>
 
-    <h1>Extreme Pigskin History</h1>
+ <div class="page-card hero-card">
 
-    <h2 id="standings-title">All-Time Standings</h2>
-    <p>
-      Click a heading to sort. For weighted average check out <a href="/power-rankings">Power Rankings</a>
-    </p>
-    <label for="owner-filter">Owners:</label>
+  <p>
+    The complete history of the league from 2010 to today.
+  </p>
 
-    <select id="owner-filter">
-      <option value="all">All Owners</option>
-      <option value="active">Active Owners</option>
-    </select>
-<br>
-    <label for="game-type-filter">Game Type:</label>
+  <p>
+    Explore owner records, championships, rivalries, seasons, and league history.
+  </p>
 
-    <select id="game-type-filter">
-      <option value="all">All Games</option>
-      <option value="regular">Regular Season</option>
-      <option value="playoffs">Playoffs</option>
-      <option value="consolation">Consolation</option>
-    </select>
+  <p>
+    Any issues or suggestions, please let Derek know! Coming soon: Player-specific history for each fantasy team!
+  </p>
+</div>
+
+<div class="season-summary-grid">
+
+  <div class="stat-card">
+    <span class="stat-label">Seasons</span>
+    <span class="stat-value">15</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Games</span>
+    <span class="stat-value">1,407</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Owners</span>
+    <span class="stat-value">10</span>
+  </div>
+
+</div>
+
+   <div class="page-card">
+
+  <h2 id="standings-title">All-Time Standings</h2>
+
+  <p>
+    Click a heading to sort. For weighted averages check out
+    <a href="/power-rankings">Power Rankings</a>.
+  </p>
+
+  <div class="table-wrap">
+  <h2>Standings Filters</h2>
+
+  <div class="owner-select-grid">
+    <div>
+      <label for="owner-filter">Owners</label>
+
+      <select id="owner-filter">
+        <option value="all">All Owners</option>
+        <option value="active">Active Owners</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="game-type-filter">Game Type</label>
+
+      <select id="game-type-filter">
+        <option value="all">All Games</option>
+        <option value="regular">Regular Season</option>
+        <option value="playoffs">Playoffs</option>
+        <option value="consolation">Consolation</option>
+      </select>
+    </div>
+  </div>
+</div>
 <div class="table-wrap">
     <table id="standings-table">
       <tr>
@@ -187,6 +233,7 @@ function emptyRecord(ownerName) {
         })
       }
     </table>
+</div>
 </div>
     <script>
       const ownerFilter = document.getElementById("owner-filter");
@@ -321,6 +368,4 @@ function updateDisplayedStats() {
 
       updateTitle();
     </script>
-  </body>
-</html>
 </Layout>
