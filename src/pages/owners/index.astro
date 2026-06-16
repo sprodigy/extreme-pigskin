@@ -1,0 +1,153 @@
+---
+import Layout from "../../layouts/layout.astro";
+import { getGameLog, getOwners } from "../../lib/data";
+import {
+  getOwnerList,
+  slugifyOwner,
+  calculateChampionships,
+  calculateToiletBowls
+} from "../../lib/stats";
+
+const gameLog = getGameLog();
+const ownerStatuses = getOwners();
+
+const championshipData = calculateChampionships(gameLog);
+const toiletBowlData = calculateToiletBowls(gameLog);
+
+const owners = getOwnerList(gameLog);
+
+function getOwnerStatus(ownerName) {
+  return ownerStatuses.find(
+    owner => owner.owner === ownerName
+  )?.status ?? "UNKNOWN";
+}
+
+function getYearsActive(ownerName) {
+  const years = new Set();
+
+  for (const game of gameLog) {
+    if (
+      game.team1 === ownerName ||
+      game.team2 === ownerName
+    ) {
+      years.add(game.year);
+    }
+  }
+
+  return Array.from(years).sort((a, b) => a - b);
+}
+
+const ownerCards = owners.map(owner => {
+  const years = getYearsActive(owner.owner);
+
+  return {
+    owner: owner.owner,
+    ownerId: owner.ownerId,
+
+    status: getOwnerStatus(owner.owner),
+
+    firstYear: years[0],
+    lastYear: years[years.length - 1],
+    seasonsPlayed: years.length,
+
+    championships:
+      championshipData[owner.owner]?.championships ?? 0,
+
+    runnerUps:
+      championshipData[owner.owner]?.runnerUps ?? 0,
+
+    toiletBowls:
+      toiletBowlData[owner.owner] ?? 0
+  };
+});
+---
+
+<Layout title="Owners">
+
+  <h1>&#128100; Owners</h1>
+
+  <label for="owner-filter">Show:</label>
+
+  <select id="owner-filter">
+    <option value="all">All Owners</option>
+    <option value="active">Current Owners</option>
+  </select>
+
+  <div class="owner-grid">
+
+    {
+      ownerCards.map(owner => (
+<div
+  class={`owner-card ${owner.status === "RETIRED" ? "retired-owner" : ""}`}
+  data-status={owner.status}
+>
+          <div class="owner-name">
+            {owner.owner}
+          </div>
+
+<div class="owner-meta">
+  {
+    owner.status === "ACTIVE"
+      ? "Active"
+      : "Retired 💀"
+  }
+</div>
+
+          <div class="owner-meta">
+            {owner.firstYear} - {owner.lastYear}
+          </div>
+
+          <div class="owner-meta">
+            {owner.seasonsPlayed} Seasons
+          </div>
+
+          <div class="owner-achievements">
+            <span title="Championships">
+              &#127942; {owner.championships}
+            </span>
+
+            <span title="Runner-Ups">
+              &#129352; {owner.runnerUps}
+            </span>
+
+            <span title="Last Place Finishes">
+              &#128701; {owner.toiletBowls}
+            </span>
+          </div>
+
+          <a
+            class="owner-profile-link"
+            href={`/owners/${slugifyOwner(owner.owner)}`}
+          >
+            View Profile →
+          </a>
+        </div>
+      ))
+    }
+
+  </div>
+
+  <script>
+    const filter =
+      document.getElementById("owner-filter");
+
+    const cards =
+      document.querySelectorAll(".owner-card");
+
+    filter.addEventListener("change", () => {
+      const showActiveOnly =
+        filter.value === "active";
+
+      cards.forEach(card => {
+        const isActive =
+          card.dataset.status === "ACTIVE";
+
+        card.style.display =
+          !showActiveOnly || isActive
+            ? ""
+            : "none";
+      });
+    });
+  </script>
+
+</Layout>

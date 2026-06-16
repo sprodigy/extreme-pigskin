@@ -7,6 +7,10 @@ const currentPath = Astro.url.pathname;
     Home &#127968;
   </a>
 
+    <a href="/owners" class={currentPath.startsWith("/league-notes") ? "active" : ""}>
+    Owners &#128100;
+  </a>
+
   <a href="/power-rankings" class={currentPath.startsWith("/power-rankings") ? "active" : ""}>
     Power &#128200;
   </a>
