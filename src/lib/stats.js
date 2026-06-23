@@ -994,6 +994,14 @@ const lastPlaceLeaders = allRecords
     }
   }
 
+    const pointDifferentialLeaders = regularRecords
+  .map(owner => ({
+    owner: owner.owner,
+    value: owner.pointsFor - owner.pointsAgainst
+  }))
+  .filter(row => row.value > 0)
+  .sort((a, b) => b.value - a.value);
+
   bestSingleSeasons.sort((a, b) => {
     if (b.winPct !== a.winPct) return b.winPct - a.winPct;
     if (b.wins !== a.wins) return b.wins - a.wins;
@@ -1008,6 +1016,7 @@ const lastPlaceLeaders = allRecords
     winsLeaders,
     playoffWinsLeaders,
     lastPlaceLeaders,
+    pointDifferentialLeaders,
     bestSingleSeasons: bestSingleSeasons.slice(0, 3)
   };
 }
