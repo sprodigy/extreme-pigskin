@@ -293,10 +293,18 @@ export function getOwnerChampionshipResults(games, ownerName) {
 }
 
 export function getSeasonFinishers(games, year) {
-  const playoffGames = getPlayoffGamesForSeason(games, year);
+  const numericYear = Number(year);
+
+  const playoffGames = getPlayoffGamesForSeason(games, numericYear);
 
   const championshipGame = playoffGames.find(
     game => game.gameType === "P" && game.finalSeeding === 1
+  );
+
+  const championshipOverride = championshipOverrides.find(
+    override =>
+      override.type === "shared_championship" &&
+      override.year === numericYear
   );
 
   const consolationPlacementGames = playoffGames
@@ -324,10 +332,25 @@ export function getSeasonFinishers(games, year) {
   const toiletBowl = getWinnerLoser(toiletBowlGame);
 
   return {
-    champion: championship?.winner ?? null,
-    runnerUp: championship?.loser ?? null,
+    champion: championshipOverride
+      ? championshipOverride.owners.join(" / ")
+      : championship?.winner ?? null,
+
+    champions: championshipOverride
+      ? championshipOverride.owners
+      : championship?.winner
+        ? [championship.winner]
+        : [],
+
+    runnerUp: championshipOverride
+      ? null
+      : championship?.loser ?? null,
+
     championScore: championship?.winnerScore ?? null,
     runnerUpScore: championship?.loserScore ?? null,
+
+    isSharedChampionship: Boolean(championshipOverride),
+    championshipNote: championshipOverride?.note ?? null,
 
     toiletBowlWinner: toiletBowl?.winner ?? null,
     toiletBowlLoser: toiletBowl?.loser ?? null,
@@ -1149,7 +1172,7 @@ const lastPlaces = calculateLastPlaceFinishes(games);
       playoffWins * 4 +
       winPct * 100 +
       pointsPerGame * 0.25 -
-      - lastPlaceFinishes * 15;
+       lastPlaceFinishes * 15;
 
     return {
       owner: ownerName,

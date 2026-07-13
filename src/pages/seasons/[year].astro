@@ -41,6 +41,15 @@ const games = stats.getGamesForSeason(gameLog, year);
 const playoffGames = stats.getPlayoffGamesForSeason(gameLog, year);
 const finishers = stats.getSeasonFinishers(gameLog, year);
 const topTeamsByWeek = stats.getTopTeamsByWeek(gameLog, year);
+
+const survivorResults = stats.getSurvivorResults(gameLog);
+
+const survivorResult = survivorResults.find(
+  result => result.year === currentYear
+);
+
+const survivorChampion = survivorResult?.survivor ?? null;
+
 const seasonGames = stats.getGamesForSeason(gameLog, year);
 const totalPoints = {};
 
@@ -110,18 +119,29 @@ const slugifyOwner = stats.slugifyOwner;
 
 <div class="season-summary-grid">
 
-  {
-    finishers.champion && (
-      <div class="stat-card">
-        <span class="stat-label">&#127942; Champion</span>
-        <span class="stat-value">
-          <a href={`/owners/${slugifyOwner(finishers.champion)}`}>
-            {finishers.champion}
-          </a>
-        </span>
-      </div>
-    )
-  }
+{
+  finishers.champions.length > 0 && (
+    <div class="stat-card">
+      <span class="stat-label">
+        &#127942; {finishers.isSharedChampionship ? "Shared Champions" : "Champion"}
+      </span>
+
+      <span class="stat-value">
+        {
+          finishers.champions.map((owner, index, arr) => (
+            <>
+              <a href={`/owners/${slugifyOwner(owner)}`}>
+                {stats.shortOwnerName(owner)}
+              </a>
+
+              {index < arr.length - 1 ? " / " : ""}
+            </>
+          ))
+        }
+      </span>
+    </div>
+  )
+}
 
   {
     finishers.runnerUp && (
@@ -129,7 +149,7 @@ const slugifyOwner = stats.slugifyOwner;
         <span class="stat-label">&#129352; Runner-Up</span>
         <span class="stat-value">
           <a href={`/owners/${slugifyOwner(finishers.runnerUp)}`}>
-            {finishers.runnerUp}
+            {stats.shortOwnerName(finishers.runnerUp)}
           </a>
         </span>
       </div>
@@ -160,12 +180,26 @@ const slugifyOwner = stats.slugifyOwner;
         <span class="stat-label">&#128701; Toilet Bowl Winner</span>
         <span class="stat-value">
           <a href={`/owners/${slugifyOwner(finishers.toiletBowlWinner)}`}>
-            {finishers.toiletBowlWinner}
+            {stats.shortOwnerName(finishers.toiletBowlWinner)}
           </a>
         </span>
       </div>
     )
   }
+
+{
+  survivorChampion && (
+    <div class="stat-card">
+      <span class="stat-label">&#128170; Survivor Champion</span>
+
+      <span class="stat-value">
+        <a href={`/owners/${slugifyOwner(survivorChampion)}`}>
+          {stats.shortOwnerName(survivorChampion)}
+        </a>
+      </span>
+    </div>
+  )
+}
 
 {
   mostRegularSeasonPoints && (
