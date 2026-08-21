@@ -7,8 +7,16 @@ const currentPath = Astro.url.pathname;
     Home &#127968;
   </a>
 
-    <a href="/owners" class={currentPath.startsWith("/league-notes") ? "active" : ""}>
+    <a href="/owners" class={currentPath.startsWith("/owners") ? "active" : ""}>
     Owners &#128100;
+  </a>
+
+   <a href="/head-to-head" class={currentPath.startsWith("/head-to-head") ? "active" : ""}>
+    Head-to-Head &#9876;
+  </a>
+
+    <a href="/seasons" class={currentPath.startsWith("/seasons") ? "active" : ""}>
+    Seasons &#128197;
   </a>
 
   <a href="/power-rankings" class={currentPath.startsWith("/power-rankings") ? "active" : ""}>
@@ -25,14 +33,6 @@ const currentPath = Astro.url.pathname;
 
   <a href="/records" class={currentPath.startsWith("/records") ? "active" : ""}>
     Records &#128214;
-  </a>
-
-  <a href="/seasons" class={currentPath.startsWith("/seasons") ? "active" : ""}>
-    Seasons &#128197;
-  </a>
-
-  <a href="/head-to-head" class={currentPath.startsWith("/head-to-head") ? "active" : ""}>
-    Head-to-Head &#9876;
   </a>
 
   <a href="/hof" class={currentPath.startsWith("/hof") ? "active" : ""}>
