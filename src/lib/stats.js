@@ -51,12 +51,17 @@ export function calculateOwnerRecords(games) {
     }
   }
 
-  return Object.values(owners)
-    .map(owner => ({
-      ...owner,
-      winPct: owner.gamesPlayed > 0 ? owner.wins / owner.gamesPlayed : 0
-    }))
-    .sort((a, b) => b.winPct - a.winPct);
+return Object.values(owners)
+  .map(owner => ({
+    ...owner,
+    winPct: owner.gamesPlayed > 0
+      ? owner.wins / owner.gamesPlayed
+      : 0,
+    pointsPerGame: owner.gamesPlayed > 0
+      ? owner.pointsFor / owner.gamesPlayed
+      : 0
+  }))
+  .sort((a, b) => b.winPct - a.winPct);
 }
 
 export function slugifyOwner(ownerName) {

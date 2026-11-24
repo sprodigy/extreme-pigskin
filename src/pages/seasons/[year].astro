@@ -7,13 +7,13 @@ export function getStaticPaths() {
   const gameLog = getGameLog();
   const seasons = stats.getSeasonList(gameLog);
 
-  return seasons.map(year => ({
+  return seasons.map((year) => ({
     params: {
-      year: String(year)
+      year: String(year),
     },
     props: {
-      year
-    }
+      year,
+    },
   }));
 }
 
@@ -24,19 +24,18 @@ const currentYear = Number(year);
 
 const currentIndex = seasons.indexOf(currentYear);
 
-const newerSeason =
-  currentIndex > 0
-    ? seasons[currentIndex - 1]
-    : null;
+const newerSeason = currentIndex > 0 ? seasons[currentIndex - 1] : null;
 
 const olderSeason =
-  currentIndex < seasons.length - 1
-    ? seasons[currentIndex + 1]
-    : null;
+  currentIndex < seasons.length - 1 ? seasons[currentIndex + 1] : null;
 const standings = stats.calculateRegularSeasonStandings(gameLog, year);
 const regularSeasonLeader = standings[0];
-const mostRegularSeasonPoints = [...standings]
-  .sort((a, b) => b.pointsFor - a.pointsFor)[0];
+const mostRegularSeasonPoints = [...standings].sort(
+  (a, b) => b.pointsFor - a.pointsFor,
+)[0];
+const highestPPG = [...standings]
+  .filter((owner) => owner.gamesPlayed > 0)
+  .sort((a, b) => b.pointsPerGame - a.pointsPerGame)[0];
 const games = stats.getGamesForSeason(gameLog, year);
 const playoffGames = stats.getPlayoffGamesForSeason(gameLog, year);
 const finishers = stats.getSeasonFinishers(gameLog, year);
@@ -45,7 +44,7 @@ const topTeamsByWeek = stats.getTopTeamsByWeek(gameLog, year);
 const survivorResults = stats.getSurvivorResults(gameLog);
 
 const survivorResult = survivorResults.find(
-  result => result.year === currentYear
+  (result) => result.year === currentYear,
 );
 
 const survivorChampion = survivorResult?.survivor ?? null;
@@ -54,355 +53,358 @@ const seasonGames = stats.getGamesForSeason(gameLog, year);
 const totalPoints = {};
 
 for (const game of seasonGames) {
-  totalPoints[game.team1] =
-    (totalPoints[game.team1] || 0) + game.team1Score;
+  totalPoints[game.team1] = (totalPoints[game.team1] || 0) + game.team1Score;
 
-  totalPoints[game.team2] =
-    (totalPoints[game.team2] || 0) + game.team2Score;
+  totalPoints[game.team2] = (totalPoints[game.team2] || 0) + game.team2Score;
 }
 
-const mostTotalPoints = Object.entries(totalPoints)
-  .sort((a, b) => b[1] - a[1])[0];
+const mostTotalPoints = Object.entries(totalPoints).sort(
+  (a, b) => b[1] - a[1],
+)[0];
 
 const slugifyOwner = stats.slugifyOwner;
 ---
+
 <Layout title="Season Details">
-<html>
-  <body>
-    <h1>{year} Season</h1>
-    <p>
-  {
-    newerSeason && (
-      <a href={`/seasons/${newerSeason}`}>
-        &larr; {newerSeason}
-      </a>
-    )
-  }
-
-  {
-    newerSeason && olderSeason && " | "
-  }
-
-  {
-    olderSeason && (
-      <a href={`/seasons/${olderSeason}`}>
-        {olderSeason} &rarr;
-      </a>
-    )
-  }
-</p>
-
-    <label for="season-select">Jump to season:</label>
-
-    <select id="season-select">
-      {
-        seasons.map(seasonYear => (
-          <option
-            value={`/seasons/${seasonYear}`}
-            selected={seasonYear === year}
-          >
-            {seasonYear}
-          </option>
-        ))
-      }
-    </select>
-
-    <script>
-      const select = document.getElementById("season-select");
-
-      select.addEventListener("change", event => {
-        window.location.href = event.target.value;
-      });
-    </script>
-
-<h2>Season Results</h2>
-
-<div class="season-summary-grid">
-
-{
-  finishers.champions.length > 0 && (
-    <div class="stat-card">
-      <span class="stat-label">
-        &#127942; {finishers.isSharedChampionship ? "Shared Champions" : "Champion"}
-      </span>
-
-      <span class="stat-value">
+  <html>
+    <body>
+      <h1>{year} Season</h1>
+      <p>
         {
-          finishers.champions.map((owner, index, arr) => (
-            <>
-              <a href={`/owners/${slugifyOwner(owner)}`}>
-                {stats.shortOwnerName(owner)}
-              </a>
+          newerSeason && (
+            <a href={`/seasons/${newerSeason}`}>&larr; {newerSeason}</a>
+          )
+        }
 
-              {index < arr.length - 1 ? " / " : ""}
-            </>
+        {newerSeason && olderSeason && " | "}
+
+        {
+          olderSeason && (
+            <a href={`/seasons/${olderSeason}`}>{olderSeason} &rarr;</a>
+          )
+        }
+      </p>
+
+      <label for="season-select">Jump to season:</label>
+
+      <select id="season-select">
+        {
+          seasons.map((seasonYear) => (
+            <option
+              value={`/seasons/${seasonYear}`}
+              selected={seasonYear === year}
+            >
+              {seasonYear}
+            </option>
           ))
         }
-      </span>
-    </div>
-  )
-}
+      </select>
 
-  {
-    finishers.runnerUp && (
-      <div class="stat-card">
-        <span class="stat-label">&#129352; Runner-Up</span>
-        <span class="stat-value">
-          <a href={`/owners/${slugifyOwner(finishers.runnerUp)}`}>
-            {stats.shortOwnerName(finishers.runnerUp)}
-          </a>
-        </span>
+      <script>
+        const select = document.getElementById("season-select");
+
+        select.addEventListener("change", (event) => {
+          window.location.href = event.target.value;
+        });
+      </script>
+
+      <h2>Season Results</h2>
+
+      <div class="season-summary-grid">
+        {
+          finishers.champions.length > 0 && (
+            <div class="stat-card">
+              <span class="stat-label">
+                &#127942;{" "}
+                {finishers.isSharedChampionship
+                  ? "Shared Champions"
+                  : "Champion"}
+              </span>
+
+              <span class="stat-value">
+                {finishers.champions.map((owner, index, arr) => (
+                  <>
+                    <a href={`/owners/${slugifyOwner(owner)}`}>
+                      {stats.shortOwnerName(owner)}
+                    </a>
+
+                    {index < arr.length - 1 ? " / " : ""}
+                  </>
+                ))}
+              </span>
+            </div>
+          )
+        }
+
+        {
+          finishers.runnerUp && (
+            <div class="stat-card">
+              <span class="stat-label">&#129352; Runner-Up</span>
+              <span class="stat-value">
+                <a href={`/owners/${slugifyOwner(finishers.runnerUp)}`}>
+                  {stats.shortOwnerName(finishers.runnerUp)}
+                </a>
+              </span>
+            </div>
+          )
+        }
+
+        {
+          regularSeasonLeader && (
+            <div class="stat-card">
+              <span class="stat-label">&#127913; Best Regular Season</span>
+              <span class="stat-value">
+                <a href={`/owners/${slugifyOwner(regularSeasonLeader.owner)}`}>
+                  {stats.shortOwnerName(regularSeasonLeader.owner)}
+                </a>
+                <br />
+                {regularSeasonLeader.wins}-{regularSeasonLeader.losses}
+                {regularSeasonLeader.ties > 0
+                  ? `-${regularSeasonLeader.ties}`
+                  : ""}
+              </span>
+            </div>
+          )
+        }
+
+        {
+          finishers.toiletBowlWinner && (
+            <div class="stat-card">
+              <span class="stat-label">&#128701; Toilet Bowl Winner</span>
+              <span class="stat-value">
+                <a href={`/owners/${slugifyOwner(finishers.toiletBowlWinner)}`}>
+                  {stats.shortOwnerName(finishers.toiletBowlWinner)}
+                </a>
+              </span>
+            </div>
+          )
+        }
+
+        {
+          survivorChampion && (
+            <div class="stat-card">
+              <span class="stat-label">&#128170; Survivor Champion</span>
+
+              <span class="stat-value">
+                <a href={`/owners/${slugifyOwner(survivorChampion)}`}>
+                  {stats.shortOwnerName(survivorChampion)}
+                </a>
+              </span>
+            </div>
+          )
+        }
+
+        {
+          mostRegularSeasonPoints && (
+            <div class="stat-card">
+              <span class="stat-label">
+                &#128293; Most Regular Season Points
+              </span>
+              <span class="stat-value">
+                <a
+                  href={`/owners/${slugifyOwner(mostRegularSeasonPoints.owner)}`}
+                >
+                  {stats.shortOwnerName(mostRegularSeasonPoints.owner)}
+                </a>
+                <br />
+                {Math.round(mostRegularSeasonPoints.pointsFor).toLocaleString()}
+              </span>
+            </div>
+          )
+        }
+        {
+          highestPPG && (
+            <div class="stat-card">
+              <span class="stat-label">&#127919; Highest Points Per Game</span>
+
+              <span class="stat-value">
+                <a href={`/owners/${slugifyOwner(highestPPG.owner)}`}>
+                  {stats.shortOwnerName(highestPPG.owner)}
+                </a>
+                <br />
+                {highestPPG.pointsPerGame.toFixed(2)}
+              </span>
+            </div>
+          )
+        }
+        {
+          mostTotalPoints && (
+            <div class="stat-card">
+              <span class="stat-label">&#128200; Most Total Points</span>
+              <span class="stat-value">
+                <a href={`/owners/${slugifyOwner(mostTotalPoints[0])}`}>
+                  {stats.shortOwnerName(mostTotalPoints[0])}
+                </a>
+                <br />
+                {Math.round(mostTotalPoints[1]).toLocaleString()}
+              </span>
+            </div>
+          )
+        }
       </div>
-    )
-  }
 
-  {
-  regularSeasonLeader && (
-    <div class="stat-card">
-      <span class="stat-label">&#127913; Best Regular Season</span>
-      <span class="stat-value">
-        <a href={`/owners/${slugifyOwner(regularSeasonLeader.owner)}`}>
-          {stats.shortOwnerName(regularSeasonLeader.owner)}
-        </a>
-        <br />
-        {regularSeasonLeader.wins}-{regularSeasonLeader.losses}
-        {regularSeasonLeader.ties > 0
-          ? `-${regularSeasonLeader.ties}`
-          : ""}
-      </span>
-    </div>
-  )
-}
-
-  {
-    finishers.toiletBowlWinner && (
-      <div class="stat-card">
-        <span class="stat-label">&#128701; Toilet Bowl Winner</span>
-        <span class="stat-value">
-          <a href={`/owners/${slugifyOwner(finishers.toiletBowlWinner)}`}>
-            {stats.shortOwnerName(finishers.toiletBowlWinner)}
-          </a>
-        </span>
-      </div>
-    )
-  }
-
-{
-  survivorChampion && (
-    <div class="stat-card">
-      <span class="stat-label">&#128170; Survivor Champion</span>
-
-      <span class="stat-value">
-        <a href={`/owners/${slugifyOwner(survivorChampion)}`}>
-          {stats.shortOwnerName(survivorChampion)}
-        </a>
-      </span>
-    </div>
-  )
-}
-
-{
-  mostRegularSeasonPoints && (
-    <div class="stat-card">
-      <span class="stat-label">&#128293; Most Regular Season Points</span>
-      <span class="stat-value">
-        <a href={`/owners/${slugifyOwner(mostRegularSeasonPoints.owner)}`}>
-          {stats.shortOwnerName(mostRegularSeasonPoints.owner)}
-        </a>
-        <br />
-        {Math.round(
-          mostRegularSeasonPoints.pointsFor
-        ).toLocaleString()}
-      </span>
-    </div>
-  )
-}
-
-{
-  mostTotalPoints && (
-    <div class="stat-card">
-      <span class="stat-label">&#128200; Most Total Points</span>
-      <span class="stat-value">
-        <a href={`/owners/${slugifyOwner(mostTotalPoints[0])}`}>
-          {stats.shortOwnerName(mostTotalPoints[0])}
-        </a>
-        <br />
-        {Math.round(
-          mostTotalPoints[1]
-        ).toLocaleString()}
-      </span>
-    </div>
-  )
-}
-
-</div>
-<h2>Top Team of the Week</h2>
-<div class="table-wrap">
-<table>
-  <tr>
-    <th>Week</th>
-    <th>Owner</th>
-    <th>Score</th>
-    <th>Opponent</th>
-    <th>Opponent Score</th>
-    <th>Game Type</th>
-  </tr>
-
-  {
-    topTeamsByWeek.map(row => (
-      <tr>
-        <td>{row.week}</td>
-        <td>
-          <a href={`/owners/${slugifyOwner(row.owner)}`}>
-            {stats.shortOwnerName(row.owner)}
-          </a>
-        </td>
-        <td>{row.score.toFixed(2)}</td>
-        <td>
-          <a href={`/owners/${slugifyOwner(row.opponent)}`}>
-            {stats.shortOwnerName(row.opponent)}
-          </a>
-        </td>
-        <td>{row.opponentScore.toFixed(2)}</td>
-        <td>{row.gameType}</td>
-      </tr>
-    ))
-  }
-</table>
-</div>
-    <h2>Regular Season Standings</h2>
-<div class="table-wrap">
-    <table>
-      <tr>
-        <th>Rank</th>
-        <th>Owner</th>
-        <th>W</th>
-        <th>L</th>
-        <th>T</th>
-        <th>Win %</th>
-        <th>PF</th>
-        <th>PA</th>
-        <th>GP</th>
-      </tr>
-
-      {
-        standings.map((owner, index) => (
+      <h2>Top Team of the Week</h2>
+      <div class="table-wrap">
+        <table>
           <tr>
-            <td>{index + 1}</td>
-            <td>
-              <a href={`/owners/${slugifyOwner(owner.owner)}`}>
-                {stats.shortOwnerName(owner.owner)}
-              </a>
-            </td>
-            <td>{owner.wins}</td>
-            <td>{owner.losses}</td>
-            <td>{owner.ties}</td>
-            <td>{owner.winPct.toFixed(3)}</td>
-            <td>{owner.pointsFor.toFixed(2)}</td>
-            <td>{owner.pointsAgainst.toFixed(2)}</td>
-            <td>{owner.gamesPlayed}</td>
+            <th>Week</th>
+            <th>Owner</th>
+            <th>Score</th>
+            <th>Game Type</th>
           </tr>
-        ))
-      }
-    </table>
-</div>
-<h2>Playoffs & Consolation</h2>
-<div class="table-wrap">
-<table>
-  <tr>
-    <th>Week</th>
-    <th>Type</th>
-    <th>Winner</th>
-    <th>Score</th>
-    <th>Loser</th>
-    <th>Score</th>
-  </tr>
 
-  {
-    playoffGames.map(game => {
-      const team1Won = game.team1Score > game.team2Score;
+          {
+            topTeamsByWeek.map((row) => (
+              <tr>
+                <td>{row.week}</td>
+                <td>
+                  <a href={`/owners/${slugifyOwner(row.owner)}`}>
+                    {stats.shortOwnerName(row.owner)}
+                  </a>
+                </td>
+                <td>{row.score.toFixed(2)}</td>
+                <td>{row.gameType}</td>
+              </tr>
+            ))
+          }
+        </table>
+      </div>
 
-      const winner = team1Won ? game.team1 : game.team2;
-      const loser = team1Won ? game.team2 : game.team1;
+      <h2>Regular Season Standings</h2>
+      <div class="table-wrap">
+        <table>
+          <tr>
+            <th>Rank</th>
+            <th>Owner</th>
+            <th>W</th>
+            <th>L</th>
+            <th>T</th>
+            <th>Win %</th>
+            <th>PF</th>
+            <th>PPG</th>
+            <th>PA</th>
+          </tr>
 
-      const winnerScore = team1Won ? game.team1Score : game.team2Score;
-      const loserScore = team1Won ? game.team2Score : game.team1Score;
+          {
+            standings.map((owner, index) => (
+              <tr>
+                <td>{index + 1}</td>
+                <td>
+                  <a href={`/owners/${slugifyOwner(owner.owner)}`}>
+                    {stats.shortOwnerName(owner.owner)}
+                  </a>
+                </td>
+                <td>{owner.wins}</td>
+                <td>{owner.losses}</td>
+                <td>{owner.ties}</td>
+                <td>{owner.winPct.toFixed(3)}</td>
+                <td>{owner.pointsFor.toFixed(2)}</td>
+                <td>{owner.pointsPerGame.toFixed(2)}</td>
+                <td>{owner.pointsAgainst.toFixed(2)}</td>
+              </tr>
+            ))
+          }
+        </table>
+      </div>
+      <h2>Playoffs & Consolation</h2>
+      <div class="table-wrap">
+        <table>
+          <tr>
+            <th>Week</th>
+            <th>Type</th>
+            <th>Winner</th>
+            <th>Score</th>
+            <th>Loser</th>
+            <th>Score</th>
+          </tr>
 
-      const maxPlayoffWeek = Math.max(...playoffGames.map(row => row.week));
+          {
+            playoffGames.map((game) => {
+              const team1Won = game.team1Score > game.team2Score;
 
-      const gameTypeLabel =
-        game.gameType === "P" && game.week === maxPlayoffWeek
-          ? "Championship"
-          : game.gameType === "P"
-            ? "Playoff"
-            : "Consolation";
+              const winner = team1Won ? game.team1 : game.team2;
+              const loser = team1Won ? game.team2 : game.team1;
 
-      return (
-        <tr>
-          <td>{game.week}</td>
-          <td>{gameTypeLabel}</td>
-          <td>
-            <a href={`/owners/${slugifyOwner(winner)}`}>
-              {stats.shortOwnerName(winner)}
-            </a>
-          </td>
-          <td>{winnerScore.toFixed(2)}</td>
-          <td>
-            <a href={`/owners/${slugifyOwner(loser)}`}>
-              {stats.shortOwnerName(loser)}
-            </a>
-          </td>
-          <td>{loserScore.toFixed(2)}</td>
-        </tr>
-      );
-    })
-  }
-</table>
-</div>
-<h2>All Games</h2>
-<div class="table-wrap">
-<table>
-  <tr>
-    <th>Week</th>
-    <th>Game Type</th>
-    <th>Winner</th>
-    <th>Score</th>
-    <th>Loser</th>
-    <th>Score</th>
-  </tr>
+              const winnerScore = team1Won ? game.team1Score : game.team2Score;
+              const loserScore = team1Won ? game.team2Score : game.team1Score;
 
-  {
-    games.map(game => {
-      const team1Won = game.team1Score > game.team2Score;
+              const maxPlayoffWeek = Math.max(
+                ...playoffGames.map((row) => row.week),
+              );
 
-      const winner = team1Won ? game.team1 : game.team2;
-      const loser = team1Won ? game.team2 : game.team1;
+              const gameTypeLabel =
+                game.gameType === "P" && game.week === maxPlayoffWeek
+                  ? "Championship"
+                  : game.gameType === "P"
+                    ? "Playoff"
+                    : "Consolation";
 
-      const winnerScore = team1Won ? game.team1Score : game.team2Score;
-      const loserScore = team1Won ? game.team2Score : game.team1Score;
+              return (
+                <tr>
+                  <td>{game.week}</td>
+                  <td>{gameTypeLabel}</td>
+                  <td>
+                    <a href={`/owners/${slugifyOwner(winner)}`}>
+                      {stats.shortOwnerName(winner)}
+                    </a>
+                  </td>
+                  <td>{winnerScore.toFixed(2)}</td>
+                  <td>
+                    <a href={`/owners/${slugifyOwner(loser)}`}>
+                      {stats.shortOwnerName(loser)}
+                    </a>
+                  </td>
+                  <td>{loserScore.toFixed(2)}</td>
+                </tr>
+              );
+            })
+          }
+        </table>
+      </div>
+      <h2>All Games</h2>
+      <div class="table-wrap">
+        <table>
+          <tr>
+            <th>Week</th>
+            <th>Game Type</th>
+            <th>Winner</th>
+            <th>Score</th>
+            <th>Loser</th>
+            <th>Score</th>
+          </tr>
 
-      return (
-        <tr>
-          <td>{game.week}</td>
-          <td>{game.gameType}</td>
-          <td>
-            <a href={`/owners/${slugifyOwner(winner)}`}>
-              {stats.shortOwnerName(winner)}
-            </a>
-          </td>
-          <td>{winnerScore.toFixed(2)}</td>
-          <td>
-            <a href={`/owners/${slugifyOwner(loser)}`}>
-              {stats.shortOwnerName(loser)}
-            </a>
-          </td>
-          <td>{loserScore.toFixed(2)}</td>
-        </tr>
-      );
-    })
-  }
-</table>
-</div>
-  </body>
-</html>
+          {
+            games.map((game) => {
+              const team1Won = game.team1Score > game.team2Score;
+
+              const winner = team1Won ? game.team1 : game.team2;
+              const loser = team1Won ? game.team2 : game.team1;
+
+              const winnerScore = team1Won ? game.team1Score : game.team2Score;
+              const loserScore = team1Won ? game.team2Score : game.team1Score;
+
+              return (
+                <tr>
+                  <td>{game.week}</td>
+                  <td>{game.gameType}</td>
+                  <td>
+                    <a href={`/owners/${slugifyOwner(winner)}`}>
+                      {stats.shortOwnerName(winner)}
+                    </a>
+                  </td>
+                  <td>{winnerScore.toFixed(2)}</td>
+                  <td>
+                    <a href={`/owners/${slugifyOwner(loser)}`}>
+                      {stats.shortOwnerName(loser)}
+                    </a>
+                  </td>
+                  <td>{loserScore.toFixed(2)}</td>
+                </tr>
+              );
+            })
+          }
+        </table>
+      </div>
+    </body>
+  </html>
 </Layout>
